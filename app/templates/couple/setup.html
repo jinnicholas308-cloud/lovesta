@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}커플 연결{% endblock %}
+
+{% block content %}
+<div class="min-h-[70vh] flex items-center justify-center">
+  <div class="w-full max-w-lg space-y-6">
+    <div class="text-center">
+      <div class="text-5xl mb-2">💑</div>
+      <h1 class="text-2xl font-bold text-gray-800">커플 연결</h1>
+      <p class="text-gray-500 text-sm mt-1">새 커플 공간을 만들거나 파트너의 코드로 참여하세요</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-4">
+      <!-- Create -->
+      <div class="bg-white rounded-2xl shadow-sm border border-rose-100 p-6">
+        <h2 class="font-semibold text-gray-800 mb-4">✨ 새로 만들기</h2>
+        <form method="POST" class="space-y-3">
+          <input type="hidden" name="action" value="create" />
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">커플 이름 <span class="text-gray-400">(선택)</span></label>
+            <input type="text" name="couple_name" maxlength="100"
+                   class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition"
+                   placeholder="예: 진이와 민이" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">사귄 날 <span class="text-gray-400">(선택)</span></label>
+            <input type="date" name="anniversary"
+                   class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition" />
+          </div>
+          <button type="submit"
+                  class="w-full bg-rose-500 hover:bg-rose-600 text-white font-medium py-2 rounded-lg transition text-sm">
+            커플 코드 생성
+          </button>
+        </form>
+      </div>
+
+      <!-- Join -->
+      <div class="bg-white rounded-2xl shadow-sm border border-pink-100 p-6">
+        <h2 class="font-semibold text-gray-800 mb-4">🔗 코드로 참여</h2>
+        <form method="POST" class="space-y-3">
+          <input type="hidden" name="action" value="join" />
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">파트너의 커플 코드</label>
+            <input type="text" name="invite_code" required
+                   class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-100 transition"
+                   placeholder="코드를 입력하세요" />
+          </div>
+          <button type="submit"
+                  class="w-full bg-pink-500 hover:bg-pink-600 text-white font-medium py-2 rounded-lg transition text-sm mt-3">
+            연결하기
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

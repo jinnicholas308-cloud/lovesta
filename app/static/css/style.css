@@ -1,0 +1,28 @@
+/* Lovesta — global styles */
+
+/* Line clamp utility (fallback for older browsers) */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Smooth image loading */
+img {
+  transition: opacity 0.2s ease;
+}
+
+img[loading] {
+  opacity: 0;
+}
+
+img.loaded {
+  opacity: 1;
+}
+
+/* File dropzone drag highlight */
+.dropzone-active {
+  border-color: #f43f5e !important;
+  background-color: #fff1f2;
+}
