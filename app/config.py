@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -8,14 +9,13 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def _fix_db_url(url: str) -> str:
-    """Render/Heroku provide postgres:// but SQLAlchemy needs postgresql://"""
+    """Railway/Render/Heroku 는 postgres:// 제공 → SQLAlchemy 는 postgresql:// 필요"""
     if url and url.startswith('postgres://'):
         return url.replace('postgres://', 'postgresql://', 1)
     return url
 
 
 def _resolve_upload_dir() -> str:
-    """환경변수가 없으면 프로젝트 루트 기준 절대경로 반환"""
     env_val = os.getenv('UPLOAD_DIR')
     if env_val:
         return os.path.abspath(env_val)
@@ -31,6 +31,10 @@ class Config:
     UPLOAD_FOLDER = _resolve_upload_dir()
     MAX_CONTENT_LENGTH = int(os.getenv('MAX_CONTENT_LENGTH', 16 * 1024 * 1024))
 
+    # 세션 설정 (로그인 유지)
+    PERMANENT_SESSION_LIFETIME = timedelta(days=30)
+    REMEMBER_COOKIE_DURATION = timedelta(days=30)
+
     # Google OAuth
     GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
     GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
@@ -38,10 +42,16 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
+    SESSION_COOKIE_SECURE = False
+    SESSION_COOKIE_SAMESITE = 'Lax'
 
 
 class ProductionConfig(Config):
     DEBUG = False
+    # HTTPS 환경에서 쿠키 보안 설정 (Railway는 HTTPS 제공)
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
 
 
 config_map = {
