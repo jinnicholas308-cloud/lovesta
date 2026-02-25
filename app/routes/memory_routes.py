@@ -2,12 +2,13 @@
 Memory routes: feed, upload, detail, delete, like toggle.
 Comment routes are separated in comment_routes.py.
 """
+import os
 from datetime import datetime
 from flask import (Blueprint, render_template, redirect, url_for, flash,
                    request, jsonify, send_from_directory, current_app)
 from flask_login import login_required, current_user
 from app.extensions import db
-from app.models import Memory, Like, Couple
+from app.models import Memory, Like, Couple, Comment
 from app.utils.file_handler import save_image, delete_image
 from app.utils.validators import is_allowed_image
 
@@ -58,7 +59,11 @@ def upload():
             if not is_allowed_image(file.filename):
                 flash('PNG, JPG, GIF, WEBP 파일만 업로드 가능합니다.', 'error')
                 return render_template('memories/upload.html')
-            image_filename = save_image(file)
+            try:
+                image_filename = save_image(file)
+            except ValueError as e:
+                flash(str(e), 'error')
+                return render_template('memories/upload.html')
 
         memory_date = None
         if memory_date_str:
@@ -87,9 +92,9 @@ def upload():
 @memories_bp.route('/memory/<int:memory_id>')
 @login_required
 def detail(memory_id):
-    from app.models import Comment
     memory = Memory.query.get_or_404(memory_id)
-    if memory.couple_id != current_user.couple_id:
+
+    if not current_user.couple_id or memory.couple_id != current_user.couple_id:
         flash('접근 권한이 없습니다.', 'error')
         return redirect(url_for('memories.feed'))
 
@@ -116,7 +121,7 @@ def delete(memory_id):
 @login_required
 def toggle_like(memory_id):
     memory = Memory.query.get_or_404(memory_id)
-    if memory.couple_id != current_user.couple_id:
+    if not current_user.couple_id or memory.couple_id != current_user.couple_id:
         return jsonify({'error': '권한 없음'}), 403
 
     existing = Like.query.filter_by(user_id=current_user.id, memory_id=memory_id).first()
@@ -133,4 +138,5 @@ def toggle_like(memory_id):
 
 @memories_bp.route('/uploads/<filename>')
 def uploaded_file(filename):
-    return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
+    upload_folder = os.path.abspath(current_app.config['UPLOAD_FOLDER'])
+    return send_from_directory(upload_folder, filename)
