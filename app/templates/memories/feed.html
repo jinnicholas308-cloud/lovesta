@@ -24,22 +24,25 @@
   {% for memory in memories.items %}
   <a href="{{ url_for('memories.detail', memory_id=memory.id) }}"
      class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block">
-    {% if memory.image_path %}
-    <div class="aspect-square overflow-hidden bg-gray-100">
-      {# Cloudinary URL이면 직접 사용, 로컬 파일이면 uploaded_file 라우트 경유 #}
-      {% if memory.image_path.startswith('http') %}
-      <img src="{{ memory.image_path }}"
-           alt="추억 사진" class="w-full h-full object-cover" />
+    <div class="aspect-square overflow-hidden bg-gradient-to-br from-rose-50 to-pink-100">
+      {% if memory.image_path %}
+        {% if memory.image_path.startswith('http') %}
+        {# Cloudinary URL: 직접 사용 #}
+        <img src="{{ memory.image_path }}"
+             alt="추억 사진" class="w-full h-full object-cover"
+             onerror="this.parentElement.innerHTML='<div class=\'flex items-center justify-center w-full h-full\'><span class=\'text-5xl\'>💝</span></div>'" />
+        {% else %}
+        {# 로컬 파일: 없으면 💝 placeholder (Railway 대응) #}
+        <img src="{{ url_for('memories.uploaded_file', filename=memory.image_path) }}"
+             alt="추억 사진" class="w-full h-full object-cover"
+             onerror="this.parentElement.innerHTML='<div class=\'flex items-center justify-center w-full h-full\'><span class=\'text-5xl\'>💝</span></div>'" />
+        {% endif %}
       {% else %}
-      <img src="{{ url_for('memories.uploaded_file', filename=memory.image_path) }}"
-           alt="추억 사진" class="w-full h-full object-cover" />
+      <div class="flex items-center justify-center w-full h-full">
+        <span class="text-5xl">💝</span>
+      </div>
       {% endif %}
     </div>
-    {% else %}
-    <div class="aspect-square bg-gradient-to-br from-rose-50 to-pink-100 flex items-center justify-center">
-      <span class="text-5xl">💝</span>
-    </div>
-    {% endif %}
 
     <div class="p-3">
       <p class="text-sm text-gray-700 line-clamp-2">{{ memory.caption }}</p>

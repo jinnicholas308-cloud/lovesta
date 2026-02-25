@@ -41,9 +41,14 @@
                class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition"
                placeholder="비밀번호를 입력하세요" />
       </div>
-      <div class="flex items-center gap-2">
-        <input type="checkbox" name="remember" id="remember" class="rounded accent-rose-500" checked />
-        <label for="remember" class="text-sm text-gray-600">로그인 유지 (30일)</label>
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <input type="checkbox" name="remember" id="remember" class="rounded accent-rose-500" checked />
+          <label for="remember" class="text-sm text-gray-600">로그인 유지 (30일)</label>
+        </div>
+        <a href="{{ url_for('auth.forgot') }}" class="text-xs text-gray-400 hover:text-rose-500 transition">
+          아이디 / 비밀번호 찾기
+        </a>
       </div>
       <button type="submit"
               class="w-full bg-rose-500 hover:bg-rose-600 active:bg-rose-700 text-white font-medium py-2.5 rounded-xl transition text-sm shadow-sm">

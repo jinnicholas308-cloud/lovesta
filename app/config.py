@@ -22,14 +22,23 @@ def _resolve_upload_dir() -> str:
     return os.path.join(BASE_DIR, 'storage', 'uploads')
 
 
+_DB_URL = _fix_db_url(
+    os.getenv('DATABASE_URL', f'sqlite:///{os.path.join(BASE_DIR, "lovesta.db")}')
+)
+
+
 class Config:
-    SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key')
-    SQLALCHEMY_DATABASE_URI = _fix_db_url(
-        os.getenv('DATABASE_URL', 'sqlite:///lovesta.db')
-    )
+    SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
+    SQLALCHEMY_DATABASE_URI = _DB_URL
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     UPLOAD_FOLDER = _resolve_upload_dir()
     MAX_CONTENT_LENGTH = int(os.getenv('MAX_CONTENT_LENGTH', 16 * 1024 * 1024))
+
+    # PostgreSQL 연결 안정성 (Railway 재시작 후 끊긴 커넥션 자동 복구)
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_pre_ping': True,
+        'pool_recycle': 300,
+    }
 
     # 세션 설정 (로그인 유지)
     PERMANENT_SESSION_LIFETIME = timedelta(days=30)
@@ -38,6 +47,11 @@ class Config:
     # Google OAuth
     GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
     GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
+
+    # Admin 계정 (Railway 환경변수로 관리)
+    ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', 'admin@lovesta.app')
+    ADMIN_USERNAME = os.getenv('ADMIN_USERNAME', 'admin')
+    ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'Admin1234!')
 
 
 class DevelopmentConfig(Config):

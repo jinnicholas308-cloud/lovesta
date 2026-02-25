@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
-{% block title %}{{ memory.caption[:30] }}{% endblock %}
+{# caption 혹은 author 이 None 이어도 500 안 뜨도록 안전하게 처리 #}
+{% block title %}{{ (memory.caption or '추억')[:30] }}{% endblock %}
 
 {% block content %}
 <div class="max-w-xl mx-auto space-y-4">
@@ -13,24 +14,31 @@
   <!-- Memory Card -->
   <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
     {% if memory.image_path %}
-      {# Cloudinary URL이면 직접 사용, 로컬 파일이면 uploaded_file 라우트 경유 #}
       {% if memory.image_path.startswith('http') %}
+      {# Cloudinary URL: 직접 사용 #}
       <img src="{{ memory.image_path }}"
-           alt="추억 사진" class="w-full max-h-96 object-cover" />
+           alt="추억 사진" class="w-full max-h-96 object-cover"
+           onerror="this.style.display='none'" />
       {% else %}
+      {# 로컬 파일: Railway에서 없을 수 있음 → onerror 숨김 처리 #}
       <img src="{{ url_for('memories.uploaded_file', filename=memory.image_path) }}"
-           alt="추억 사진" class="w-full max-h-96 object-cover" />
+           alt="추억 사진" class="w-full max-h-96 object-cover"
+           onerror="this.parentElement.querySelector('.img-fallback').style.display='flex';this.style.display='none'" />
+      <div class="img-fallback hidden bg-gradient-to-br from-rose-50 to-pink-100 h-48 items-center justify-center">
+        <span class="text-5xl">💝</span>
+      </div>
       {% endif %}
     {% endif %}
 
     <div class="p-5">
       <!-- Author & Date -->
       <div class="flex items-center gap-3 mb-4">
+        {% set author_name = memory.author.username if memory.author else '알 수 없음' %}
         <div class="w-9 h-9 rounded-full bg-rose-100 flex items-center justify-center text-rose-500 font-semibold">
-          {{ memory.author.username[0].upper() }}
+          {{ author_name[0].upper() }}
         </div>
         <div>
-          <p class="text-sm font-medium text-gray-700">{{ memory.author.username }}</p>
+          <p class="text-sm font-medium text-gray-700">{{ author_name }}</p>
           <p class="text-xs text-gray-400">
             {{ memory.created_at.strftime('%Y년 %m월 %d일') }}
             {% if memory.memory_date and memory.memory_date != memory.created_at.date() %}
@@ -41,7 +49,7 @@
       </div>
 
       <!-- Caption -->
-      <p class="text-gray-800 leading-relaxed mb-3">{{ memory.caption }}</p>
+      <p class="text-gray-800 leading-relaxed mb-3">{{ memory.caption or '' }}</p>
 
       {% if memory.location %}
       <p class="text-sm text-gray-400 mb-4">📍 {{ memory.location }}</p>
@@ -81,11 +89,12 @@
     <div class="space-y-3 mb-5">
       {% for comment in comments %}
       <div class="flex gap-3 group">
+        {% set cname = comment.author.username if comment.author else '알 수 없음' %}
         <div class="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center text-rose-400 font-semibold text-sm shrink-0">
-          {{ comment.author.username[0].upper() }}
+          {{ cname[0].upper() }}
         </div>
         <div class="flex-1 min-w-0">
-          <span class="text-sm font-medium text-gray-700">{{ comment.author.username }}</span>
+          <span class="text-sm font-medium text-gray-700">{{ cname }}</span>
           <span class="text-xs text-gray-400 ml-2">{{ comment.created_at.strftime('%m.%d %H:%M') }}</span>
           <p class="text-sm text-gray-600 mt-0.5 break-words">{{ comment.content }}</p>
         </div>

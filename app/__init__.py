@@ -24,7 +24,10 @@ def create_app(env: str = None):
 
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        try:
+            return User.query.get(int(user_id))
+        except Exception:
+            return None
 
     # Blueprints
     from app.routes.auth_routes import auth_bp
@@ -45,5 +48,33 @@ def create_app(env: str = None):
 
     with app.app_context():
         db.create_all()
+        _ensure_admin(app)
 
     return app
+
+
+def _ensure_admin(app):
+    """
+    앱 시작 시 admin 계정 자동 생성 (없을 경우에만).
+    환경변수: ADMIN_EMAIL, ADMIN_USERNAME, ADMIN_PASSWORD
+    """
+    from app.models import User
+    try:
+        admin_email = app.config['ADMIN_EMAIL']
+        admin_user = User.query.filter_by(email=admin_email).first()
+        if not admin_user:
+            admin_user = User(
+                username=app.config['ADMIN_USERNAME'],
+                email=admin_email,
+                is_admin=True,
+            )
+            admin_user.set_password(app.config['ADMIN_PASSWORD'])
+            db.session.add(admin_user)
+            db.session.commit()
+            app.logger.info(f'[Admin] 관리자 계정 생성: {admin_email}')
+        elif not admin_user.is_admin:
+            admin_user.is_admin = True
+            db.session.commit()
+            app.logger.info(f'[Admin] 관리자 권한 복구: {admin_email}')
+    except Exception as e:
+        app.logger.warning(f'[Admin] 관리자 계정 초기화 실패: {e}')

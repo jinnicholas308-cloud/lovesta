@@ -3,48 +3,87 @@
 
 {% block content %}
 <div class="space-y-4">
-  <div class="flex items-center gap-4">
+  <div class="flex items-center gap-4 flex-wrap">
     <a href="{{ url_for('admin.dashboard') }}" class="text-sm text-gray-400 hover:text-rose-500">← 대시보드</a>
     <h1 class="text-xl font-bold text-gray-800">👥 유저 관리</h1>
+    <span class="text-sm text-gray-400 ml-auto">총 {{ users.total }}명</span>
   </div>
 
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-    <table class="w-full text-sm">
-      <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
+  <!-- 검색 -->
+  <form method="GET" class="flex gap-2">
+    <input type="text" name="q" value="{{ search }}" placeholder="유저명 또는 이메일 검색..."
+           class="flex-1 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition" />
+    <button type="submit" class="bg-rose-500 hover:bg-rose-600 text-white text-sm font-medium px-4 py-2 rounded-xl transition shrink-0">검색</button>
+    {% if search %}
+    <a href="{{ url_for('admin.user_list') }}" class="border border-gray-200 hover:border-rose-300 text-gray-500 text-sm px-3 py-2 rounded-xl transition shrink-0">초기화</a>
+    {% endif %}
+  </form>
+
+  <!-- 유저 테이블 -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
+    <table class="w-full text-sm min-w-[700px]">
+      <thead class="bg-gray-50 text-gray-500 text-xs uppercase border-b border-gray-100">
         <tr>
-          <th class="px-4 py-3 text-left">ID</th>
+          <th class="px-4 py-3 text-left w-10">ID</th>
           <th class="px-4 py-3 text-left">유저명</th>
           <th class="px-4 py-3 text-left">이메일</th>
           <th class="px-4 py-3 text-left">가입일</th>
-          <th class="px-4 py-3 text-left">커플</th>
+          <th class="px-4 py-3 text-left">타입</th>
           <th class="px-4 py-3 text-left">권한</th>
-          <th class="px-4 py-3 text-left">액션</th>
+          <th class="px-4 py-3 text-left">관리</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-100">
+      <tbody class="divide-y divide-gray-50">
         {% for user in users.items %}
         <tr class="hover:bg-gray-50">
-          <td class="px-4 py-3 text-gray-400">{{ user.id }}</td>
-          <td class="px-4 py-3 font-medium text-gray-700">{{ user.username }}</td>
-          <td class="px-4 py-3 text-gray-500">{{ user.email }}</td>
-          <td class="px-4 py-3 text-gray-400">{{ user.created_at.strftime('%Y.%m.%d') }}</td>
-          <td class="px-4 py-3 text-gray-400">{{ user.couple_id or '-' }}</td>
+          <td class="px-4 py-3 text-gray-300 text-xs">{{ user.id }}</td>
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-full bg-rose-100 flex items-center justify-center text-rose-500 font-semibold text-xs shrink-0">{{ user.username[0].upper() }}</div>
+              <span class="font-medium text-gray-700">{{ user.username }}</span>
+            </div>
+          </td>
+          <td class="px-4 py-3 text-gray-500 text-xs">{{ user.email }}</td>
+          <td class="px-4 py-3 text-gray-400 text-xs">{{ user.created_at.strftime('%Y.%m.%d') }}</td>
+          <td class="px-4 py-3">
+            {% if user.is_oauth_user %}
+            <span class="bg-blue-50 text-blue-500 text-xs px-2 py-0.5 rounded-full">Google</span>
+            {% else %}
+            <span class="bg-gray-50 text-gray-400 text-xs px-2 py-0.5 rounded-full">이메일</span>
+            {% endif %}
+          </td>
           <td class="px-4 py-3">
             {% if user.is_admin %}
             <span class="bg-rose-100 text-rose-600 text-xs px-2 py-0.5 rounded-full">관리자</span>
             {% else %}
-            <span class="bg-gray-100 text-gray-500 text-xs px-2 py-0.5 rounded-full">일반</span>
+            <span class="bg-gray-100 text-gray-400 text-xs px-2 py-0.5 rounded-full">일반</span>
             {% endif %}
           </td>
           <td class="px-4 py-3">
-            <form method="POST"
-                  action="{{ url_for('admin.toggle_admin', user_id=user.id) }}"
-                  onsubmit="return confirm('권한을 변경할까요?')">
-              <button type="submit"
-                      class="text-xs text-gray-400 hover:text-rose-500 transition underline">
-                {{ '권한 해제' if user.is_admin else '관리자 지정' }}
-              </button>
-            </form>
+            <div class="flex items-center gap-2 flex-wrap">
+              <form method="POST" action="{{ url_for('admin.toggle_admin', user_id=user.id) }}" onsubmit="return confirm('권한을 변경할까요?')">
+                <button type="submit" class="text-xs text-gray-400 hover:text-rose-500 transition underline whitespace-nowrap">{{ '권한 해제' if user.is_admin else '관리자 지정' }}</button>
+              </form>
+              {% if not user.is_oauth_user %}
+              <button type="button" onclick="toggleResetForm({{ user.id }})" class="text-xs text-blue-400 hover:text-blue-500 transition underline whitespace-nowrap">비번 재설정</button>
+              {% endif %}
+              {% if user.id != current_user.id %}
+              <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" onsubmit="return confirm('⚠️ 삭제하면 되돌릴 수 없습니다.')">
+                <button type="submit" class="text-xs text-red-300 hover:text-red-500 transition underline whitespace-nowrap">삭제</button>
+              </form>
+              {% endif %}
+            </div>
+            {% if not user.is_oauth_user %}
+            <div id="reset-form-{{ user.id }}" class="hidden mt-2">
+              <form method="POST" action="{{ url_for('admin.reset_user_password', user_id=user.id) }}" class="flex gap-1.5">
+                <input type="password" name="new_password" required minlength="6"
+                       class="border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-blue-300 w-28"
+                       placeholder="새 비밀번호 (6자+)" />
+                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white text-xs px-2 py-1 rounded-lg transition whitespace-nowrap">설정</button>
+                <button type="button" onclick="toggleResetForm({{ user.id }})" class="text-gray-300 hover:text-gray-500 text-xs px-2 py-1 transition">취소</button>
+              </form>
+            </div>
+            {% endif %}
           </td>
         </tr>
         {% endfor %}
@@ -54,16 +93,20 @@
 
   {% if users.pages > 1 %}
   <div class="flex justify-center gap-2">
-    {% if users.has_prev %}
-    <a href="{{ url_for('admin.user_list', page=users.prev_num) }}"
-       class="px-3 py-1.5 text-sm bg-white border rounded-lg hover:border-rose-300 transition">이전</a>
-    {% endif %}
+    {% if users.has_prev %}<a href="{{ url_for('admin.user_list', page=users.prev_num, q=search) }}" class="px-3 py-1.5 text-sm bg-white border rounded-lg hover:border-rose-300 transition">이전</a>{% endif %}
     <span class="px-3 py-1.5 text-sm text-gray-500">{{ users.page }}/{{ users.pages }}</span>
-    {% if users.has_next %}
-    <a href="{{ url_for('admin.user_list', page=users.next_num) }}"
-       class="px-3 py-1.5 text-sm bg-white border rounded-lg hover:border-rose-300 transition">다음</a>
-    {% endif %}
+    {% if users.has_next %}<a href="{{ url_for('admin.user_list', page=users.next_num, q=search) }}" class="px-3 py-1.5 text-sm bg-white border rounded-lg hover:border-rose-300 transition">다음</a>{% endif %}
   </div>
   {% endif %}
 </div>
+
+<script>
+function toggleResetForm(userId) {
+  const form = document.getElementById('reset-form-' + userId);
+  form.classList.toggle('hidden');
+  if (!form.classList.contains('hidden')) {
+    form.querySelector('input[type=password]').focus();
+  }
+}
+</script>
 {% endblock %}
