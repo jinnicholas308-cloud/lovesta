@@ -1,8 +1,13 @@
 """
 File upload utilities: validation, storage, and image processing.
+
+Storage strategy:
+- 환경변수 CLOUDINARY_URL 있음 → Cloudinary (Railway 등 프로덕션)
+- 없음                         → 로컬 storage/uploads/ (개발환경)
 """
 import os
 import uuid
+import io
 from flask import current_app
 from PIL import Image, UnidentifiedImageError
 
@@ -25,7 +30,7 @@ def _to_rgb(img: Image.Image) -> Image.Image:
 
     if img.mode in ('RGBA', 'LA'):
         background = Image.new('RGB', img.size, (255, 255, 255))
-        mask = img.split()[-1]  # alpha channel
+        mask = img.split()[-1]
         background.paste(img.convert('RGB'), mask=mask)
         return background
 
@@ -35,41 +40,85 @@ def _to_rgb(img: Image.Image) -> Image.Image:
     return img
 
 
-def save_image(file) -> str:
-    """
-    업로드된 이미지를 UUID 파일명으로 저장.
-    - 모든 포맷을 JPEG로 통일 (투명도 → 흰 배경 합성)
-    - 최대 1200px 리사이즈 (비율 유지)
-    - 반환값: 저장된 파일명 (예: 'abc123.jpg')
-    """
+def _process_image(file) -> Image.Image:
+    """파일을 열어 RGB 변환 + 리사이즈."""
+    try:
+        img = Image.open(file)
+    except UnidentifiedImageError:
+        raise ValueError('지원하지 않는 이미지 형식입니다.')
+    img = _to_rgb(img)
+    img.thumbnail((MAX_DIMENSION, MAX_DIMENSION), Image.LANCZOS)
+    return img
+
+
+def _save_to_cloudinary(file) -> str:
+    """Cloudinary에 업로드 후 secure URL 반환."""
+    import cloudinary
+    import cloudinary.uploader
+
+    img = _process_image(file)
+    buf = io.BytesIO()
+    img.save(buf, 'JPEG', optimize=True, quality=85)
+    buf.seek(0)
+
+    result = cloudinary.uploader.upload(
+        buf,
+        folder='lovesta',
+        resource_type='image',
+        format='jpg',
+    )
+    return result['secure_url']
+
+
+def _save_to_local(file) -> str:
+    """로컬 storage/uploads/ 에 저장 후 파일명 반환."""
     upload_folder = current_app.config['UPLOAD_FOLDER']
     os.makedirs(upload_folder, exist_ok=True)
 
     filename = f"{uuid.uuid4().hex}.jpg"
     filepath = os.path.join(upload_folder, filename)
 
-    try:
-        img = Image.open(file)
-        img = _to_rgb(img)
-        img.thumbnail((MAX_DIMENSION, MAX_DIMENSION), Image.LANCZOS)
-        img.save(filepath, 'JPEG', optimize=True, quality=85)
-    except UnidentifiedImageError:
-        raise ValueError('지원하지 않는 이미지 형식입니다.')
-    except Exception as e:
-        raise ValueError(f'이미지 저장 실패: {e}')
-
+    img = _process_image(file)
+    img.save(filepath, 'JPEG', optimize=True, quality=85)
     return filename
 
 
-def delete_image(filename: str) -> bool:
+def save_image(file) -> str:
     """
-    업로드 폴더에서 이미지 삭제.
-    Returns True if deleted, False if not found.
+    이미지 저장 (Cloudinary 또는 로컬 자동 선택).
+    반환값:
+      - Cloudinary: 'https://res.cloudinary.com/...' (전체 URL)
+      - 로컬:       'abc123.jpg' (파일명만)
     """
-    if not filename:
+    try:
+        if os.getenv('CLOUDINARY_URL'):
+            return _save_to_cloudinary(file)
+        return _save_to_local(file)
+    except ValueError:
+        raise
+    except Exception as e:
+        raise ValueError(f'이미지 저장 실패: {e}')
+
+
+def delete_image(image_path: str) -> bool:
+    """이미지 삭제 (Cloudinary 또는 로컬 자동 선택)."""
+    if not image_path:
         return False
-    filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-    if os.path.exists(filepath):
-        os.remove(filepath)
-        return True
+
+    if image_path.startswith('http'):
+        if os.getenv('CLOUDINARY_URL'):
+            try:
+                import cloudinary.uploader
+                parts = image_path.split('/')
+                public_id = 'lovesta/' + parts[-1].rsplit('.', 1)[0]
+                cloudinary.uploader.destroy(public_id)
+                return True
+            except Exception:
+                return False
+    else:
+        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], image_path)
+        if os.path.exists(filepath):
+            os.remove(filepath)
+            return True
+
     return False

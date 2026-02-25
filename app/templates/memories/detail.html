@@ -13,9 +13,14 @@
   <!-- Memory Card -->
   <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
     {% if memory.image_path %}
-    <img src="{{ url_for('memories.uploaded_file', filename=memory.image_path) }}"
-         alt="추억 사진"
-         class="w-full max-h-96 object-cover" />
+      {# Cloudinary URL이면 직접 사용, 로컬 파일이면 uploaded_file 라우트 경유 #}
+      {% if memory.image_path.startswith('http') %}
+      <img src="{{ memory.image_path }}"
+           alt="추억 사진" class="w-full max-h-96 object-cover" />
+      {% else %}
+      <img src="{{ url_for('memories.uploaded_file', filename=memory.image_path) }}"
+           alt="추억 사진" class="w-full max-h-96 object-cover" />
+      {% endif %}
     {% endif %}
 
     <div class="p-5">
@@ -46,7 +51,6 @@
       <div class="flex items-center gap-3 border-t border-gray-100 pt-4">
         <button id="likeBtn"
                 data-memory-id="{{ memory.id }}"
-                data-liked="{{ 'true' if memory.is_liked_by(current_user) else 'false' }}"
                 class="flex items-center gap-1.5 text-sm font-medium transition
                   {% if memory.is_liked_by(current_user) %}text-rose-500{% else %}text-gray-400 hover:text-rose-400{% endif %}">
           <span id="likeIcon">{% if memory.is_liked_by(current_user) %}♥{% else %}♡{% endif %}</span>
@@ -87,7 +91,7 @@
         </div>
         {% if comment.user_id == current_user.id %}
         <form method="POST"
-              action="{{ url_for('memories.delete_comment', memory_id=memory.id, comment_id=comment.id) }}"
+              action="{{ url_for('comments.delete_comment', memory_id=memory.id, comment_id=comment.id) }}"
               class="shrink-0 opacity-0 group-hover:opacity-100 transition">
           <button type="submit" class="text-xs text-gray-300 hover:text-red-400 transition">✕</button>
         </form>
@@ -100,7 +104,7 @@
     {% endif %}
 
     <!-- Add comment form -->
-    <form method="POST" action="{{ url_for('memories.add_comment', memory_id=memory.id) }}"
+    <form method="POST" action="{{ url_for('comments.add_comment', memory_id=memory.id) }}"
           class="flex gap-2">
       <input type="text" name="content" required maxlength="500"
              class="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition"
