@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}추억 관리{% endblock %}
+
+{% block content %}
+<div class="space-y-4">
+  <div class="flex items-center gap-4">
+    <a href="{{ url_for('admin.dashboard') }}" class="text-sm text-gray-400 hover:text-rose-500">← 대시보드</a>
+    <h1 class="text-xl font-bold text-gray-800">🖼️ 추억 관리</h1>
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
+        <tr>
+          <th class="px-4 py-3 text-left">ID</th>
+          <th class="px-4 py-3 text-left">캡션</th>
+          <th class="px-4 py-3 text-left">작성자</th>
+          <th class="px-4 py-3 text-left">커플</th>
+          <th class="px-4 py-3 text-left">날짜</th>
+          <th class="px-4 py-3 text-left">액션</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for memory in memories.items %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-3 text-gray-400">{{ memory.id }}</td>
+          <td class="px-4 py-3 text-gray-700 max-w-xs truncate">{{ memory.caption }}</td>
+          <td class="px-4 py-3 text-gray-500">{{ memory.author.username }}</td>
+          <td class="px-4 py-3 text-gray-400">{{ memory.couple_id }}</td>
+          <td class="px-4 py-3 text-gray-400">{{ memory.created_at.strftime('%Y.%m.%d') }}</td>
+          <td class="px-4 py-3">
+            <form method="POST"
+                  action="{{ url_for('admin.delete_memory', memory_id=memory.id) }}"
+                  onsubmit="return confirm('삭제할까요?')">
+              <button type="submit" class="text-xs text-red-400 hover:text-red-600 transition underline">
+                삭제
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if memories.pages > 1 %}
+  <div class="flex justify-center gap-2">
+    {% if memories.has_prev %}
+    <a href="{{ url_for('admin.memory_list', page=memories.prev_num) }}"
+       class="px-3 py-1.5 text-sm bg-white border rounded-lg hover:border-rose-300 transition">이전</a>
+    {% endif %}
+    <span class="px-3 py-1.5 text-sm text-gray-500">{{ memories.page }}/{{ memories.pages }}</span>
+    {% if memories.has_next %}
+    <a href="{{ url_for('admin.memory_list', page=memories.next_num) }}"
+       class="px-3 py-1.5 text-sm bg-white border rounded-lg hover:border-rose-300 transition">다음</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

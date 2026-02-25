@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}관리자 대시보드{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold text-gray-800">🛠️ 관리자 대시보드</h1>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-3 gap-4">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center">
+      <p class="text-3xl font-bold text-rose-500">{{ stats.users }}</p>
+      <p class="text-sm text-gray-500 mt-1">전체 유저</p>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center">
+      <p class="text-3xl font-bold text-pink-500">{{ stats.couples }}</p>
+      <p class="text-sm text-gray-500 mt-1">커플 수</p>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center">
+      <p class="text-3xl font-bold text-purple-500">{{ stats.memories }}</p>
+      <p class="text-sm text-gray-500 mt-1">전체 추억</p>
+    </div>
+  </div>
+
+  <!-- Quick links -->
+  <div class="grid grid-cols-2 gap-4">
+    <a href="{{ url_for('admin.user_list') }}"
+       class="bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-md transition block">
+      <p class="font-semibold text-gray-700">👥 유저 관리</p>
+      <p class="text-sm text-gray-400 mt-1">유저 목록 확인 및 관리자 권한 설정</p>
+    </a>
+    <a href="{{ url_for('admin.memory_list') }}"
+       class="bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-md transition block">
+      <p class="font-semibold text-gray-700">🖼️ 추억 관리</p>
+      <p class="text-sm text-gray-400 mt-1">전체 추억 조회 및 부적절한 콘텐츠 삭제</p>
+    </a>
+  </div>
+</div>
+{% endblock %}

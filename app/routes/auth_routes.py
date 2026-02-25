@@ -1,7 +1,12 @@
+"""
+Authentication routes: register, login, logout (email/password).
+Google OAuth is handled in oauth_routes.py.
+"""
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from app.extensions import db
 from app.models import User
+from app.utils.validators import validate_username, validate_password_strength, is_valid_email
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -17,22 +22,22 @@ def register():
         password = request.form.get('password', '')
         confirm_password = request.form.get('confirm_password', '')
 
-        if not username or not email or not password:
-            flash('모든 필드를 입력해주세요.', 'error')
-            return render_template('auth/register.html')
-
+        errors = (
+            validate_username(username)
+            + ([] if is_valid_email(email) else ['올바른 이메일 형식이 아닙니다.'])
+            + validate_password_strength(password)
+        )
         if password != confirm_password:
-            flash('비밀번호가 일치하지 않습니다.', 'error')
-            return render_template('auth/register.html')
+            errors.append('비밀번호가 일치하지 않습니다.')
 
-        if len(password) < 6:
-            flash('비밀번호는 6자 이상이어야 합니다.', 'error')
+        if errors:
+            for e in errors:
+                flash(e, 'error')
             return render_template('auth/register.html')
 
         if User.query.filter_by(username=username).first():
             flash('이미 사용 중인 사용자명입니다.', 'error')
             return render_template('auth/register.html')
-
         if User.query.filter_by(email=email).first():
             flash('이미 사용 중인 이메일입니다.', 'error')
             return render_template('auth/register.html')
@@ -43,7 +48,7 @@ def register():
         db.session.commit()
 
         login_user(user)
-        flash(f'환영합니다, {username}님! 커플 코드를 생성하거나 파트너의 코드를 입력해주세요.', 'success')
+        flash(f'환영합니다, {username}님!', 'success')
         return redirect(url_for('couple.setup'))
 
     return render_template('auth/register.html')
@@ -60,7 +65,6 @@ def login():
         remember = request.form.get('remember') == 'on'
 
         user = User.query.filter_by(email=email).first()
-
         if not user or not user.check_password(password):
             flash('이메일 또는 비밀번호가 올바르지 않습니다.', 'error')
             return render_template('auth/login.html')

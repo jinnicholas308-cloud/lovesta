@@ -1,10 +1,15 @@
+"""
+Memory routes: feed, upload, detail, delete, like toggle.
+Comment routes are separated in comment_routes.py.
+"""
 from datetime import datetime
 from flask import (Blueprint, render_template, redirect, url_for, flash,
                    request, jsonify, send_from_directory, current_app)
 from flask_login import login_required, current_user
 from app.extensions import db
-from app.models import Memory, Comment, Like, Couple
-from app.utils.file_handler import allowed_file, save_image, delete_image
+from app.models import Memory, Like, Couple
+from app.utils.file_handler import save_image, delete_image
+from app.utils.validators import is_allowed_image
 
 memories_bp = Blueprint('memories', __name__)
 
@@ -50,7 +55,7 @@ def upload():
 
         image_filename = None
         if file and file.filename:
-            if not allowed_file(file.filename):
+            if not is_allowed_image(file.filename):
                 flash('PNG, JPG, GIF, WEBP 파일만 업로드 가능합니다.', 'error')
                 return render_template('memories/upload.html')
             image_filename = save_image(file)
@@ -82,6 +87,7 @@ def upload():
 @memories_bp.route('/memory/<int:memory_id>')
 @login_required
 def detail(memory_id):
+    from app.models import Comment
     memory = Memory.query.get_or_404(memory_id)
     if memory.couple_id != current_user.couple_id:
         flash('접근 권한이 없습니다.', 'error')
@@ -104,37 +110,6 @@ def delete(memory_id):
     db.session.commit()
     flash('추억이 삭제되었습니다.', 'info')
     return redirect(url_for('memories.feed'))
-
-
-@memories_bp.route('/memory/<int:memory_id>/comment', methods=['POST'])
-@login_required
-def add_comment(memory_id):
-    memory = Memory.query.get_or_404(memory_id)
-    if memory.couple_id != current_user.couple_id:
-        return jsonify({'error': '권한 없음'}), 403
-
-    content = request.form.get('content', '').strip()
-    if not content:
-        flash('댓글 내용을 입력해주세요.', 'error')
-        return redirect(url_for('memories.detail', memory_id=memory_id))
-
-    comment = Comment(content=content, user_id=current_user.id, memory_id=memory_id)
-    db.session.add(comment)
-    db.session.commit()
-    return redirect(url_for('memories.detail', memory_id=memory_id))
-
-
-@memories_bp.route('/memory/<int:memory_id>/comment/<int:comment_id>/delete', methods=['POST'])
-@login_required
-def delete_comment(memory_id, comment_id):
-    comment = Comment.query.get_or_404(comment_id)
-    if comment.user_id != current_user.id:
-        flash('삭제 권한이 없습니다.', 'error')
-        return redirect(url_for('memories.detail', memory_id=memory_id))
-
-    db.session.delete(comment)
-    db.session.commit()
-    return redirect(url_for('memories.detail', memory_id=memory_id))
 
 
 @memories_bp.route('/memory/<int:memory_id>/like', methods=['POST'])

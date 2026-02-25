@@ -40,6 +40,11 @@
         <a href="{{ url_for('couple.info') }}" class="text-gray-500 hover:text-rose-500 text-sm transition">
           💑 커플
         </a>
+        {% if current_user.is_admin %}
+        <a href="{{ url_for('admin.dashboard') }}" class="text-gray-500 hover:text-rose-500 text-sm transition">
+          🛠️ 관리
+        </a>
+        {% endif %}
         <a href="{{ url_for('auth.logout') }}" class="text-gray-400 hover:text-gray-600 text-sm transition">
           로그아웃
         </a>
