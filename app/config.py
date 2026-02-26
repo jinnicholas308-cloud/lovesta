@@ -25,25 +25,27 @@ def _resolve_upload_dir() -> str:
 def _get_db_url() -> str:
     """
     DB URL 우선순위:
-    1. DATABASE_URL 환경변수 (Railway PostgreSQL 플러그인, Heroku 등)
-    2. 개별 PG* 변수로 직접 구성 (DATABASE_URL이 빈 문자열일 때 Railway 대응)
-    3. SQLite fallback (로컬 개발)
+    1. DATABASE_URL 환경변수 (Railway PostgreSQL 플러그인 참조변수)
+    2. DATABASE_PUBLIC_URL (Railway Postgres 퍼블릭 URL — 참조변수 실패 시 대응)
+    3. 개별 PGHOST/PGPORT/PGDATABASE/PGUSER/PGPASSWORD 로 직접 구성
+    4. SQLite fallback (로컬 개발 / DB 미연결 상태에서도 앱 기동)
     """
-    # 1. DATABASE_URL (None 또는 빈 문자열이면 건너뜀)
-    url = os.getenv('DATABASE_URL') or ''
-    if url:
-        return _fix_db_url(url)
+    # 1 & 2. DATABASE_URL / DATABASE_PUBLIC_URL
+    for var in ('DATABASE_URL', 'DATABASE_PUBLIC_URL'):
+        url = os.getenv(var) or ''
+        if url:
+            return _fix_db_url(url)
 
-    # 2. 개별 PG* 변수로 PostgreSQL URL 구성
+    # 3. 개별 PG* 변수로 PostgreSQL URL 구성
     pg_host = os.getenv('PGHOST') or os.getenv('RAILWAY_PRIVATE_DOMAIN')
     pg_port = os.getenv('PGPORT', '5432')
     pg_db   = os.getenv('PGDATABASE')
     pg_user = os.getenv('PGUSER')
-    pg_pass = os.getenv('PGPASSWORD')
+    pg_pass = os.getenv('PGPASSWORD') or ''
     if pg_host and pg_db and pg_user:
         return f'postgresql://{pg_user}:{pg_pass}@{pg_host}:{pg_port}/{pg_db}'
 
-    # 3. SQLite fallback (로컬 개발 / DB 미연결 상태에서도 앱 기동 가능)
+    # 4. SQLite fallback (로컬 개발 / DB 미연결 상태에서도 앱 기동 가능)
     return f'sqlite:///{os.path.join(BASE_DIR, "lovesta.db")}'
 
 
