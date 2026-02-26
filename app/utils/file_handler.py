@@ -53,20 +53,24 @@ def _process_image(file) -> Image.Image:
 
 def _configure_cloudinary() -> bool:
     """
-    Cloudinary를 명시적으로 설정하고 성공 여부 반환.
+    Cloudinary 설정 확인 및 보완.
 
-    URL 파싱 순서:
-    1. CLOUDINARY_URL 환경변수 파싱
-       - 'CLOUDINARY_URL=cloudinary://...' 형태도 자동 정제
-    2. 개별 변수 CLOUDINARY_CLOUD_NAME / CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET
-
-    cloudinary.config(cloudinary_url=...) 는 SDK에서 무시되므로
-    urlparse로 직접 파싱 후 cloud_name / api_key / api_secret 각각 주입.
+    우선순위:
+    1. SDK 자동 설정 확인 (import cloudinary 시 CLOUDINARY_URL 자동 파싱)
+       → cloud_name 있으면 이미 올바르게 설정된 것 → 그대로 사용
+    2. CLOUDINARY_URL 수동 파싱 (prefix 정제 + unquote URL 디코딩)
+    3. 개별 변수 CLOUDINARY_CLOUD_NAME / CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET
     """
-    from urllib.parse import urlparse
+    from urllib.parse import urlparse, unquote
     import cloudinary
 
-    # --- 방법 1: CLOUDINARY_URL ---
+    # 1. SDK가 이미 자동 설정했는지 확인
+    #    (import cloudinary 시 CLOUDINARY_URL을 자동으로 읽어서 설정)
+    cfg = cloudinary.config()
+    if cfg.cloud_name and cfg.api_key and cfg.api_secret:
+        return True  # 이미 올바르게 설정됨 — 덮어쓰지 않음
+
+    # 2. CLOUDINARY_URL 수동 파싱
     raw = os.getenv('CLOUDINARY_URL', '')
     # "CLOUDINARY_URL=cloudinary://..." 형태 자동 정제
     if raw and '=' in raw and not raw.startswith('cloudinary://'):
@@ -75,20 +79,21 @@ def _configure_cloudinary() -> bool:
     if raw.startswith('cloudinary://'):
         try:
             p = urlparse(raw)
+            # unquote: URL 인코딩된 특수문자 복원 (예: %2B → +, %2F → /)
             cloudinary.config(
                 cloud_name=p.hostname,
-                api_key=p.username,
-                api_secret=p.password,
+                api_key=unquote(p.username or ''),
+                api_secret=unquote(p.password or ''),
                 secure=True,
             )
-            return True
+            return bool(cloudinary.config().cloud_name)
         except Exception:
             pass
 
-    # --- 방법 2: 개별 환경변수 ---
-    cloud_name  = os.getenv('CLOUDINARY_CLOUD_NAME')
-    api_key     = os.getenv('CLOUDINARY_API_KEY')
-    api_secret  = os.getenv('CLOUDINARY_API_SECRET')
+    # 3. 개별 환경변수
+    cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME')
+    api_key    = os.getenv('CLOUDINARY_API_KEY')
+    api_secret = os.getenv('CLOUDINARY_API_SECRET')
     if cloud_name and api_key and api_secret:
         cloudinary.config(
             cloud_name=cloud_name,
