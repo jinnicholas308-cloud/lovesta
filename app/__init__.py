@@ -47,7 +47,10 @@ def create_app(env: str = None):
     app.register_blueprint(admin_bp)
 
     with app.app_context():
-        db.create_all()
+        try:
+            db.create_all()
+        except Exception as e:
+            app.logger.warning(f'[DB] create_all 실패: {e}')
         _ensure_admin(app)
 
     return app
