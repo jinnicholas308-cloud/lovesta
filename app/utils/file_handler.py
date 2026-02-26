@@ -51,10 +51,27 @@ def _process_image(file) -> Image.Image:
     return img
 
 
+def _get_cloudinary_url() -> str:
+    """
+    CLOUDINARY_URL 환경변수를 정제해서 반환.
+    Railway에서 'CLOUDINARY_URL=cloudinary://...' 형태로 저장된 경우 자동 수정.
+    """
+    raw = os.getenv('CLOUDINARY_URL', '')
+    # 변수명이 값에 포함된 경우 제거: "CLOUDINARY_URL=cloudinary://..." → "cloudinary://..."
+    if '=' in raw and not raw.startswith('cloudinary://'):
+        raw = raw.split('=', 1)[-1].strip()
+    return raw
+
+
 def _save_to_cloudinary(file) -> str:
     """Cloudinary에 업로드 후 secure URL 반환."""
     import cloudinary
     import cloudinary.uploader
+
+    # 명시적으로 URL 파싱하여 설정 (환경변수 자동 파싱 오류 방지)
+    cloudinary_url = _get_cloudinary_url()
+    if cloudinary_url:
+        cloudinary.config(cloudinary_url=cloudinary_url)
 
     img = _process_image(file)
     buf = io.BytesIO()
@@ -91,7 +108,7 @@ def save_image(file) -> str:
       - 로컬:       'abc123.jpg' (파일명만)
     """
     try:
-        if os.getenv('CLOUDINARY_URL'):
+        if _get_cloudinary_url():
             return _save_to_cloudinary(file)
         return _save_to_local(file)
     except ValueError:
@@ -106,9 +123,10 @@ def delete_image(image_path: str) -> bool:
         return False
 
     if image_path.startswith('http'):
-        if os.getenv('CLOUDINARY_URL'):
+        if _get_cloudinary_url():
             try:
-                import cloudinary.uploader
+                import cloudinary, cloudinary.uploader
+                cloudinary.config(cloudinary_url=_get_cloudinary_url())
                 parts = image_path.split('/')
                 public_id = 'lovesta/' + parts[-1].rsplit('.', 1)[0]
                 cloudinary.uploader.destroy(public_id)
