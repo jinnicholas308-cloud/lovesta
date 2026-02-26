@@ -23,7 +23,9 @@ def _resolve_upload_dir() -> str:
 
 
 _DB_URL = _fix_db_url(
-    os.getenv('DATABASE_URL', f'sqlite:///{os.path.join(BASE_DIR, "lovesta.db")}')
+    # os.getenv 기본값은 변수가 "없을 때"만 적용 → 빈 문자열('')은 통과됨
+    # or 연산자로 None/'' 둘 다 fallback 처리
+    os.getenv('DATABASE_URL') or f'sqlite:///{os.path.join(BASE_DIR, "lovesta.db")}'
 )
 
 
