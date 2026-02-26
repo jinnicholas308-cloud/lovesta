@@ -51,16 +51,54 @@ def _process_image(file) -> Image.Image:
     return img
 
 
-def _get_cloudinary_url() -> str:
+def _configure_cloudinary() -> bool:
     """
-    CLOUDINARY_URL 환경변수를 정제해서 반환.
-    Railway에서 'CLOUDINARY_URL=cloudinary://...' 형태로 저장된 경우 자동 수정.
+    Cloudinary를 명시적으로 설정하고 성공 여부 반환.
+
+    URL 파싱 순서:
+    1. CLOUDINARY_URL 환경변수 파싱
+       - 'CLOUDINARY_URL=cloudinary://...' 형태도 자동 정제
+    2. 개별 변수 CLOUDINARY_CLOUD_NAME / CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET
+
+    cloudinary.config(cloudinary_url=...) 는 SDK에서 무시되므로
+    urlparse로 직접 파싱 후 cloud_name / api_key / api_secret 각각 주입.
     """
+    from urllib.parse import urlparse
+    import cloudinary
+
+    # --- 방법 1: CLOUDINARY_URL ---
     raw = os.getenv('CLOUDINARY_URL', '')
-    # 변수명이 값에 포함된 경우 제거: "CLOUDINARY_URL=cloudinary://..." → "cloudinary://..."
-    if '=' in raw and not raw.startswith('cloudinary://'):
+    # "CLOUDINARY_URL=cloudinary://..." 형태 자동 정제
+    if raw and '=' in raw and not raw.startswith('cloudinary://'):
         raw = raw.split('=', 1)[-1].strip()
-    return raw
+
+    if raw.startswith('cloudinary://'):
+        try:
+            p = urlparse(raw)
+            cloudinary.config(
+                cloud_name=p.hostname,
+                api_key=p.username,
+                api_secret=p.password,
+                secure=True,
+            )
+            return True
+        except Exception:
+            pass
+
+    # --- 방법 2: 개별 환경변수 ---
+    cloud_name  = os.getenv('CLOUDINARY_CLOUD_NAME')
+    api_key     = os.getenv('CLOUDINARY_API_KEY')
+    api_secret  = os.getenv('CLOUDINARY_API_SECRET')
+    if cloud_name and api_key and api_secret:
+        cloudinary.config(
+            cloud_name=cloud_name,
+            api_key=api_key,
+            api_secret=api_secret,
+            secure=True,
+        )
+        return True
+
+    return False
 
 
 def _save_to_cloudinary(file) -> str:
@@ -68,10 +106,8 @@ def _save_to_cloudinary(file) -> str:
     import cloudinary
     import cloudinary.uploader
 
-    # 명시적으로 URL 파싱하여 설정 (환경변수 자동 파싱 오류 방지)
-    cloudinary_url = _get_cloudinary_url()
-    if cloudinary_url:
-        cloudinary.config(cloudinary_url=cloudinary_url)
+    if not _configure_cloudinary():
+        raise ValueError('Cloudinary 설정 실패: CLOUDINARY_URL 또는 개별 키를 확인하세요.')
 
     img = _process_image(file)
     buf = io.BytesIO()
@@ -108,7 +144,7 @@ def save_image(file) -> str:
       - 로컬:       'abc123.jpg' (파일명만)
     """
     try:
-        if _get_cloudinary_url():
+        if os.getenv('CLOUDINARY_URL') or os.getenv('CLOUDINARY_API_KEY'):
             return _save_to_cloudinary(file)
         return _save_to_local(file)
     except ValueError:
@@ -123,10 +159,10 @@ def delete_image(image_path: str) -> bool:
         return False
 
     if image_path.startswith('http'):
-        if _get_cloudinary_url():
+        if os.getenv('CLOUDINARY_URL') or os.getenv('CLOUDINARY_API_KEY'):
             try:
-                import cloudinary, cloudinary.uploader
-                cloudinary.config(cloudinary_url=_get_cloudinary_url())
+                import cloudinary.uploader
+                _configure_cloudinary()
                 parts = image_path.split('/')
                 public_id = 'lovesta/' + parts[-1].rsplit('.', 1)[0]
                 cloudinary.uploader.destroy(public_id)
