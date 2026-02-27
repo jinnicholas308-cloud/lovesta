@@ -36,6 +36,7 @@ def create_app(env: str = None):
     from app.routes.comment_routes import comment_bp
     from app.routes.couple_routes import couple_bp
     from app.routes.admin_routes import admin_bp
+    from app.routes.profile_routes import profile_bp
 
     init_oauth(app)
 
@@ -45,6 +46,7 @@ def create_app(env: str = None):
     app.register_blueprint(comment_bp)
     app.register_blueprint(couple_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(profile_bp)
 
     with app.app_context():
         try:

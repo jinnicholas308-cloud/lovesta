@@ -7,7 +7,10 @@
     <div class="text-center mb-8">
       <div class="text-5xl mb-3">♥</div>
       <h1 class="text-2xl font-bold text-gray-800">Lovesta</h1>
-      <p class="text-gray-500 text-sm mt-1">우리의 추억을 함께 기록해요</p>
+      <p class="text-gray-500 text-sm mt-1"
+         data-ko="우리의 추억을 함께 기록해요" data-en="Record our memories together">
+        우리의 추억을 함께 기록해요
+      </p>
     </div>
 
     <!-- Google OAuth -->
@@ -19,24 +22,27 @@
         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
       </svg>
-      Google로 로그인
+      <span data-ko="Google로 로그인" data-en="Sign in with Google">Google로 로그인</span>
     </a>
 
     <div class="flex items-center gap-3 mb-5">
       <div class="flex-1 h-px bg-gray-200"></div>
-      <span class="text-xs text-gray-400">또는 이메일로</span>
+      <span class="text-xs text-gray-400"
+            data-ko="또는 이메일로" data-en="or with email">또는 이메일로</span>
       <div class="flex-1 h-px bg-gray-200"></div>
     </div>
 
     <form method="POST" class="space-y-4" autocomplete="on">
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">이메일</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1"
+               data-ko="이메일" data-en="Email">이메일</label>
         <input type="email" name="email" required autocomplete="email"
                class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition"
                placeholder="example@email.com" />
       </div>
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">비밀번호</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1"
+               data-ko="비밀번호" data-en="Password">비밀번호</label>
         <input type="password" name="password" required autocomplete="current-password"
                class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition"
                placeholder="비밀번호를 입력하세요" />
@@ -44,21 +50,25 @@
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <input type="checkbox" name="remember" id="remember" class="rounded accent-rose-500" checked />
-          <label for="remember" class="text-sm text-gray-600">로그인 유지 (30일)</label>
+          <label for="remember" class="text-sm text-gray-600"
+                 data-ko="로그인 유지 (30일)" data-en="Remember me (30 days)">로그인 유지 (30일)</label>
         </div>
-        <a href="{{ url_for('auth.forgot') }}" class="text-xs text-gray-400 hover:text-rose-500 transition">
+        <a href="{{ url_for('auth.forgot') }}" class="text-xs text-gray-400 hover:text-rose-500 transition"
+           data-ko="아이디 / 비밀번호 찾기" data-en="Forgot ID / Password">
           아이디 / 비밀번호 찾기
         </a>
       </div>
       <button type="submit"
-              class="w-full bg-rose-500 hover:bg-rose-600 active:bg-rose-700 text-white font-medium py-2.5 rounded-xl transition text-sm shadow-sm">
+              class="w-full bg-rose-500 hover:bg-rose-600 active:bg-rose-700 text-white font-medium py-2.5 rounded-xl transition text-sm shadow-sm"
+              data-ko="로그인" data-en="Login">
         로그인
       </button>
     </form>
 
     <p class="text-center text-sm text-gray-500 mt-6">
-      계정이 없으신가요?
-      <a href="{{ url_for('auth.register') }}" class="text-rose-500 hover:text-rose-600 font-medium">회원가입</a>
+      <span data-ko="계정이 없으신가요?" data-en="Don't have an account?">계정이 없으신가요?</span>
+      <a href="{{ url_for('auth.register') }}" class="text-rose-500 hover:text-rose-600 font-medium"
+         data-ko="회원가입" data-en="Sign Up">회원가입</a>
     </p>
   </div>
 </div>

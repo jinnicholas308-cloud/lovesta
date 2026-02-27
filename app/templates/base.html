@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" id="html-root">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -25,41 +25,72 @@
 </head>
 <body class="bg-rose-50 min-h-screen font-sans text-gray-800 pb-20 md:pb-0">
 
-  <!-- ── 데스크탑 Navbar ── -->
+  <!-- ── 데스크탑 / 공통 Navbar ── -->
   <nav class="bg-white shadow-sm border-b border-rose-100 sticky top-0 z-50">
     <div class="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
       <a href="{{ url_for('memories.feed') }}" class="text-2xl font-bold text-rose-500 tracking-tight">
         ♥ Lovesta
       </a>
+
       {% if current_user.is_authenticated %}
+      <!-- 데스크탑 메뉴 -->
       <div class="hidden md:flex items-center gap-3">
         <a href="{{ url_for('memories.upload') }}"
-           class="bg-rose-500 hover:bg-rose-600 text-white text-sm font-medium px-4 py-1.5 rounded-full transition">
+           class="bg-rose-500 hover:bg-rose-600 text-white text-sm font-medium px-4 py-1.5 rounded-full transition"
+           data-ko="+ 추억 업로드" data-en="+ Upload Memory">
           + 추억 업로드
         </a>
-        <a href="{{ url_for('couple.info') }}" class="text-gray-500 hover:text-rose-500 text-sm transition">
+        <a href="{{ url_for('couple.info') }}"
+           class="text-gray-500 hover:text-rose-500 text-sm transition"
+           data-ko="💑 커플" data-en="💑 Couple">
           💑 커플
         </a>
         {% if current_user.is_admin %}
-        <a href="{{ url_for('admin.dashboard') }}" class="text-gray-500 hover:text-rose-500 text-sm transition">
+        <a href="{{ url_for('admin.dashboard') }}"
+           class="text-gray-500 hover:text-rose-500 text-sm transition"
+           data-ko="🛠️ 관리" data-en="🛠️ Admin">
           🛠️ 관리
         </a>
         {% endif %}
         <span class="text-gray-300">|</span>
-        <span class="text-sm text-gray-500">{{ current_user.username }}</span>
-        <a href="{{ url_for('auth.logout') }}" class="text-gray-400 hover:text-red-400 text-sm transition">
-          로그아웃
+        <a href="{{ url_for('profile.me') }}"
+           class="text-sm text-gray-600 hover:text-rose-500 transition font-medium">
+          {{ current_user.username }}
         </a>
+        <form action="{{ url_for('auth.logout') }}" method="POST" class="inline">
+          <button type="submit"
+                  class="text-gray-400 hover:text-red-400 text-sm transition"
+                  data-ko="로그아웃" data-en="Logout">
+            로그아웃
+          </button>
+        </form>
+        <!-- 언어 토글 -->
+        <button id="lang-btn" onclick="toggleLang()"
+                class="text-xs text-gray-400 hover:text-rose-500 border border-gray-200 rounded-full px-2 py-0.5 transition font-medium">
+          EN
+        </button>
       </div>
-      <!-- 모바일: 사용자명만 표시 -->
-      <div class="flex md:hidden items-center gap-2 text-sm text-gray-500">
-        <span>{{ current_user.username }}</span>
+
+      <!-- 모바일 상단 우측: 유저명(→프로필) + 관리자 아이콘 + 언어 -->
+      <div class="flex md:hidden items-center gap-2 text-sm">
+        {% if current_user.is_admin %}
+        <a href="{{ url_for('admin.dashboard') }}"
+           class="text-gray-400 hover:text-rose-500 transition text-base">🛠️</a>
+        {% endif %}
+        <a href="{{ url_for('profile.me') }}"
+           class="text-gray-600 hover:text-rose-500 transition font-medium">
+          {{ current_user.username }}
+        </a>
+        <button id="lang-btn-mobile" onclick="toggleLang()"
+                class="text-xs text-gray-400 border border-gray-200 rounded-full px-1.5 py-0.5 font-medium">
+          EN
+        </button>
       </div>
       {% endif %}
     </div>
   </nav>
 
-  <!-- Flash Messages -->
+  <!-- ── Flash Messages ── -->
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
     <div class="max-w-4xl mx-auto px-4 mt-3 space-y-2">
@@ -76,17 +107,19 @@
     {% endif %}
   {% endwith %}
 
-  <!-- Main Content -->
+  <!-- ── Main Content ── -->
   <main class="max-w-4xl mx-auto px-4 py-6">
     {% block content %}{% endblock %}
   </main>
 
-  <!-- ── 모바일 하단 네비게이션 ── -->
+  <!-- ── 모바일 하단 네비게이션 (4탭) ── -->
   {% if current_user.is_authenticated %}
   <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-50 safe-bottom">
     <div class="flex items-center justify-around h-16 px-2">
+
+      <!-- 피드 -->
       <a href="{{ url_for('memories.feed') }}"
-         class="flex flex-col items-center gap-0.5 text-gray-400 hover:text-rose-500 transition px-4 py-2">
+         class="flex flex-col items-center gap-0.5 text-gray-400 hover:text-rose-500 active:text-rose-600 transition px-3 py-2">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z
@@ -94,28 +127,144 @@
                    M4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2z
                    M14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
         </svg>
-        <span class="text-xs">피드</span>
+        <span class="text-xs" data-ko="피드" data-en="Feed">피드</span>
       </a>
 
-      <!-- 가운데 + 추가 버튼 -->
+      <!-- 커플 -->
+      <a href="{{ url_for('couple.info') }}"
+         class="flex flex-col items-center gap-0.5 text-gray-400 hover:text-rose-500 active:text-rose-600 transition px-3 py-2">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.5l1.318-1.182a4.5 4.5 0 116.364 6.364L12 21 4.318 12.682a4.5 4.5 0 010-6.364z"/>
+        </svg>
+        <span class="text-xs" data-ko="커플" data-en="Couple">커플</span>
+      </a>
+
+      <!-- 업로드 + 버튼 (중앙 강조) -->
       <a href="{{ url_for('memories.upload') }}"
-         class="flex flex-col items-center justify-center w-14 h-14 bg-rose-500 hover:bg-rose-600 active:bg-rose-700 text-white rounded-full shadow-lg -mt-5 transition">
+         class="flex flex-col items-center justify-center w-14 h-14
+                bg-rose-500 hover:bg-rose-600 active:bg-rose-700
+                text-white rounded-full shadow-lg -mt-5 transition">
         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
         </svg>
       </a>
 
-      <a href="{{ url_for('couple.info') }}"
-         class="flex flex-col items-center gap-0.5 text-gray-400 hover:text-rose-500 transition px-4 py-2">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.5l1.318-1.182a4.5 4.5 0 116.364 6.364L12 21 4.318 12.682a4.5 4.5 0 010-6.364z"/>
-        </svg>
-        <span class="text-xs">커플</span>
+      <!-- 프로필 -->
+      <a href="{{ url_for('profile.me') }}"
+         class="flex flex-col items-center gap-0.5 text-gray-400 hover:text-rose-500 active:text-rose-600 transition px-3 py-2">
+        {% if current_user.profile_image %}
+          <img src="{{ current_user.profile_image }}"
+               class="w-6 h-6 rounded-full object-cover" />
+        {% else %}
+          <div class="w-6 h-6 rounded-full bg-gradient-to-br from-rose-400 to-pink-500
+                      flex items-center justify-center text-white text-xs font-bold">
+            {{ current_user.username[0].upper() }}
+          </div>
+        {% endif %}
+        <span class="text-xs" data-ko="프로필" data-en="Profile">프로필</span>
       </a>
+
     </div>
   </nav>
   {% endif %}
+
+  <!-- ── 펫 팝업 위젯 ── -->
+  {% if current_user.is_authenticated and current_user.couple %}
+  {% set pet = current_user.couple.pet_info %}
+  <div id="pet-widget" class="fixed bottom-20 md:bottom-6 right-4 z-40 flex flex-col items-end">
+
+    <!-- 펫 정보 카드 -->
+    <div id="pet-card"
+         class="mb-2 bg-white rounded-2xl shadow-xl border border-rose-100 p-4 w-56 hidden relative">
+      <!-- 닫기 버튼 -->
+      <button onclick="petToggle()"
+              class="absolute top-2 right-3 text-gray-300 hover:text-gray-500 text-xl leading-none font-light">
+        ×
+      </button>
+      <div class="flex items-center gap-3 pr-4">
+        <span class="{{ pet.size }} animate-bounce leading-none select-none">{{ pet.emoji }}</span>
+        <div>
+          <p class="font-bold text-gray-800 text-sm">{{ pet.name }}</p>
+          <p class="text-xs text-gray-400 mt-0.5">
+            <span data-ko="{{ pet.stage }}" data-en="{{ pet.stage }}">{{ pet.stage }}</span>
+            ·
+            {{ pet.days }}<span data-ko="일째 🌸" data-en="days 🌸">일째 🌸</span>
+          </p>
+          {% if pet.stage == '알' %}
+          <p class="text-xs text-rose-400 mt-1"
+             data-ko="곧 깨어나요 🥚" data-en="Hatching soon 🥚">곧 깨어나요 🥚</p>
+          {% elif pet.stage == '어른' %}
+          <p class="text-xs text-rose-400 mt-1"
+             data-ko="다 컸어요! 🎉" data-en="Fully grown! 🎉">다 컸어요! 🎉</p>
+          {% endif %}
+        </div>
+      </div>
+      <p class="mt-3 text-xs text-center text-gray-300 border-t border-gray-50 pt-2"
+         data-ko="우리의 소중한 펫이에요 💕" data-en="Our little companion 💕">
+        우리의 소중한 펫이에요 💕
+      </p>
+    </div>
+
+    <!-- 토글 버튼 (펫 이모지) -->
+    <button onclick="petToggle()" id="pet-toggle-btn"
+            title="{{ pet.name }}"
+            class="w-12 h-12 bg-white rounded-full shadow-lg border border-rose-100
+                   flex items-center justify-center text-2xl
+                   hover:scale-110 active:scale-95 transition-transform select-none">
+      {{ pet.emoji }}
+    </button>
+  </div>
+
+  <script>
+    function petToggle() {
+      var card = document.getElementById('pet-card');
+      var isHidden = card.classList.contains('hidden');
+      card.classList.toggle('hidden', !isHidden);
+      localStorage.setItem('petOpen', isHidden ? '1' : '0');
+    }
+    // 이전 상태 복원
+    if (localStorage.getItem('petOpen') === '1') {
+      var _pc = document.getElementById('pet-card');
+      if (_pc) _pc.classList.remove('hidden');
+    }
+  </script>
+  {% endif %}
+
+  <!-- ── 언어 토글 스크립트 (KR ↔ EN) ── -->
+  <script>
+    (function () {
+      var LANG_KEY = 'lovesta_lang';
+      var lang = localStorage.getItem(LANG_KEY) || 'ko';
+
+      function applyLang(l) {
+        var html = document.getElementById('html-root');
+        if (html) html.lang = l;
+
+        // data-ko / data-en 속성을 가진 모든 요소 텍스트 전환
+        document.querySelectorAll('[data-ko][data-en]').forEach(function (el) {
+          var val = el.getAttribute('data-' + l);
+          if (val !== null) el.textContent = val;
+        });
+
+        // 버튼 레이블 갱신 (전환 가능한 언어 표시)
+        ['lang-btn', 'lang-btn-mobile'].forEach(function (id) {
+          var btn = document.getElementById(id);
+          if (btn) btn.textContent = l === 'ko' ? 'EN' : '한';
+        });
+
+        localStorage.setItem(LANG_KEY, l);
+        lang = l;
+      }
+
+      window.toggleLang = function () {
+        applyLang(lang === 'ko' ? 'en' : 'ko');
+      };
+
+      // 페이지 로드 시 저장된 언어 적용
+      if (lang !== 'ko') applyLang(lang);
+    })();
+  </script>
 
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
