@@ -16,6 +16,12 @@ class User(UserMixin, db.Model):
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # 프로필 상세 정보
+    birthday = db.Column(db.Date, nullable=True)
+    favorite_food = db.Column(db.String(100), nullable=True)
+    bio = db.Column(db.Text, nullable=True)
+    mbti = db.Column(db.String(4), nullable=True)
+
     couple_id = db.Column(db.Integer, db.ForeignKey('couples.id'), nullable=True)
 
     memories = db.relationship('Memory', backref='author', lazy='dynamic',
