@@ -53,9 +53,53 @@ def create_app(env: str = None):
             db.create_all()
         except Exception as e:
             app.logger.warning(f'[DB] create_all 실패: {e}')
+        _run_migrations(app)
         _ensure_admin(app)
 
     return app
+
+
+def _run_migrations(app):
+    """
+    앱 시작 시 누락된 컬럼을 자동으로 추가합니다.
+    PostgreSQL: ADD COLUMN IF NOT EXISTS 사용
+    SQLite: 컬럼 없으면 추가 (OperationalError 무시)
+    """
+    from sqlalchemy import text, inspect
+
+    # (테이블명, 컬럼명, 컬럼 타입)
+    columns_to_add = [
+        ('users',   'birthday',       'DATE'),
+        ('users',   'favorite_food',  'VARCHAR(100)'),
+        ('users',   'bio',            'TEXT'),
+        ('users',   'mbti',           'VARCHAR(4)'),
+        ('couples', 'pet_name',       'VARCHAR(50)'),
+    ]
+
+    db_url = str(app.config.get('SQLALCHEMY_DATABASE_URI', ''))
+    is_pg  = db_url.startswith('postgresql')
+
+    with app.app_context():
+        inspector = inspect(db.engine)
+        existing_tables = inspector.get_table_names()
+
+        for table, col, col_type in columns_to_add:
+            if table not in existing_tables:
+                continue
+            existing_cols = [c['name'] for c in inspector.get_columns(table)]
+            if col in existing_cols:
+                continue
+            try:
+                if is_pg:
+                    sql = f'ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {col} {col_type}'
+                else:
+                    sql = f'ALTER TABLE {table} ADD COLUMN {col} {col_type}'
+                db.session.execute(text(sql))
+                db.session.commit()
+                app.logger.info(f'[Migration] {table}.{col} 컬럼 추가 완료')
+            except Exception as e:
+                db.session.rollback()
+                app.logger.warning(f'[Migration] {table}.{col} 추가 실패: {e}')
 
 
 def _ensure_admin(app):
