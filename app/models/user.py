@@ -22,6 +22,9 @@ class User(UserMixin, db.Model):
     bio = db.Column(db.Text, nullable=True)
     mbti = db.Column(db.String(4), nullable=True)
 
+    # 펫 가챠 시스템
+    reroll_tickets = db.Column(db.Integer, default=1, nullable=False)
+
     couple_id = db.Column(db.Integer, db.ForeignKey('couples.id'), nullable=True)
 
     memories = db.relationship('Memory', backref='author', lazy='dynamic',

@@ -1,0 +1,339 @@
+{% extends 'base.html' %}
+{% block title %}10연차 뽑기{% endblock %}
+
+{% block content %}
+<style>
+  /* ── Card Flip Animation ── */
+  .flip-card {
+    perspective: 1000px;
+    width: 100%;
+    aspect-ratio: 3/4;
+  }
+  .flip-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform-style: preserve-3d;
+  }
+  .flip-card-inner.flipped {
+    transform: rotateY(180deg);
+  }
+  .flip-card-front,
+  .flip-card-back {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: 1rem;
+    overflow: hidden;
+  }
+  .flip-card-front {
+    background: linear-gradient(135deg, #f43f5e 0%, #ec4899 55%, #f97316 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 24px rgba(244, 63, 94, 0.25);
+  }
+  .flip-card-front::before {
+    content: '?';
+    font-size: 3rem;
+    font-weight: 900;
+    color: rgba(255, 255, 255, 0.3);
+    position: absolute;
+    user-select: none;
+  }
+  .flip-card-front .card-pattern {
+    position: absolute;
+    inset: 0;
+    opacity: 0.08;
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 10px,
+      rgba(255, 255, 255, 0.5) 10px,
+      rgba(255, 255, 255, 0.5) 20px
+    );
+  }
+  .flip-card-back {
+    transform: rotateY(180deg);
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 2px solid rgba(244, 63, 94, 0.15);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem;
+    gap: 0.35rem;
+  }
+
+  /* ── 10th Card Special Glow ── */
+  @keyframes specialGlow {
+    0%, 100% { box-shadow: 0 0 30px rgba(255, 255, 255, 0.6), 0 0 60px rgba(244, 63, 94, 0.3); }
+    50%      { box-shadow: 0 0 50px rgba(255, 255, 255, 0.9), 0 0 80px rgba(244, 63, 94, 0.5); }
+  }
+  .special-card .flip-card-back {
+    animation: specialGlow 1.5s ease-in-out infinite;
+  }
+  .special-card .flip-card-front {
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.5), 0 0 60px rgba(244, 63, 94, 0.3);
+  }
+
+  /* ── Shake for 10th card ── */
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+    20%, 40%, 60%, 80% { transform: translateX(3px); }
+  }
+  .shake-anim {
+    animation: shake 0.6s ease-in-out;
+  }
+
+  /* ── Sparkle overlay ── */
+  @keyframes sparkle {
+    0%, 100% { opacity: 0; transform: scale(0.5) rotate(0deg); }
+    50%      { opacity: 1; transform: scale(1.2) rotate(180deg); }
+  }
+  .sparkle-dot {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: white;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: sparkle 1.5s ease-in-out infinite;
+  }
+
+  /* ── Banner slide-down ── */
+  @keyframes bannerSlide {
+    from { opacity: 0; transform: translateY(-20px) scale(0.9); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .banner-anim {
+    animation: bannerSlide 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+</style>
+
+<div class="max-w-xl mx-auto space-y-5">
+
+  <!-- ── Header ── -->
+  <div class="text-center slide-up">
+    <h1 class="text-2xl font-black gradient-text">10연차 뽑기</h1>
+    <p class="text-sm text-gray-400 mt-1">10마리의 펫을 한 번에! 10번째는 레어 이상 확정!</p>
+  </div>
+
+  <!-- ── Ticket Info ── -->
+  <div class="glass rounded-2xl p-4 text-center slide-up" style="animation-delay:.06s">
+    <div class="flex items-center justify-center gap-2">
+      <span class="text-2xl">🎟️</span>
+      <span class="text-sm text-gray-500">보유 리롤권</span>
+      <span id="ticket-count" class="text-xl font-black text-rose-500">{{ tickets }}</span>
+      <span class="text-sm text-gray-400">장</span>
+    </div>
+    <p class="text-xs text-gray-400 mt-1">10연차 1회 = 리롤권 10장 소모</p>
+  </div>
+
+  <!-- ── Pull Button ── -->
+  <div id="pull-section" class="text-center slide-up" style="animation-delay:.12s">
+    <button id="pull-btn"
+            class="gradient-rose text-white font-black text-lg px-10 py-4 rounded-2xl
+                   shadow-lg hover:opacity-90 active:scale-95 transition-all
+                   disabled:opacity-50 disabled:cursor-not-allowed"
+            {% if tickets < 10 %}disabled{% endif %}>
+      🎰 10연차 뽑기!
+    </button>
+    {% if tickets < 10 %}
+    <p class="text-xs text-red-400 mt-2 font-medium">리롤권이 부족해요! ({{ tickets }}/10)</p>
+    {% endif %}
+  </div>
+
+  <!-- ── Card Grid (hidden until pull) ── -->
+  <div id="card-grid" class="hidden">
+    <!-- 10th card special banner -->
+    <div id="special-banner" class="hidden text-center mb-4">
+      <div class="inline-block bg-gradient-to-r from-amber-400 via-rose-500 to-purple-500
+                  text-white font-black text-sm px-6 py-2 rounded-full shadow-lg banner-anim">
+        ✨ 레어 이상 확정! ✨
+      </div>
+    </div>
+
+    <div id="cards" class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+      <!-- Cards injected by JS -->
+    </div>
+  </div>
+
+  <!-- ── Post-Pull Actions (hidden until all flipped) ── -->
+  <div id="post-actions" class="hidden text-center space-y-3 slide-up">
+    <a href="{{ url_for('pet.collection') }}"
+       class="inline-block gradient-rose text-white font-bold text-sm px-8 py-3 rounded-full
+              shadow-md hover:opacity-90 active:scale-95 transition-all">
+      📦 컬렉션 보기
+    </a>
+    <button id="pull-again-btn"
+            class="block mx-auto text-sm text-rose-500 hover:text-rose-600 font-semibold
+                   border border-rose-200 hover:border-rose-300 px-6 py-2 rounded-full transition-colors">
+      🎰 한 번 더 뽑기
+    </button>
+  </div>
+
+  <!-- ── Back Link ── -->
+  <a href="{{ url_for('pet.collection') }}"
+     class="block text-center text-sm text-gray-400 hover:text-rose-500 transition-colors py-2">
+    ← 컬렉션으로 돌아가기
+  </a>
+
+</div>
+
+<script>
+(function() {
+  var pullBtn = document.getElementById('pull-btn');
+  var pullAgainBtn = document.getElementById('pull-again-btn');
+  var cardGrid = document.getElementById('card-grid');
+  var cardsContainer = document.getElementById('cards');
+  var postActions = document.getElementById('post-actions');
+  var pullSection = document.getElementById('pull-section');
+  var specialBanner = document.getElementById('special-banner');
+  var ticketEl = document.getElementById('ticket-count');
+
+  function doPull() {
+    pullBtn.disabled = true;
+    pullBtn.textContent = '뽑는 중...';
+    cardGrid.classList.add('hidden');
+    postActions.classList.add('hidden');
+    specialBanner.classList.add('hidden');
+    cardsContainer.innerHTML = '';
+
+    fetch(window.location.href, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (!data.success) {
+        alert(data.message || '뽑기에 실패했어요.');
+        pullBtn.disabled = false;
+        pullBtn.textContent = '🎰 10연차 뽑기!';
+        return;
+      }
+
+      // Update ticket count
+      ticketEl.textContent = data.tickets_remaining;
+
+      // Build 10 cards (face-down)
+      var pets = data.pets;
+      cardGrid.classList.remove('hidden');
+      pullSection.classList.add('hidden');
+
+      for (var i = 0; i < pets.length; i++) {
+        var pet = pets[i];
+        var isSpecial = (i === 9);
+        var card = document.createElement('div');
+        card.className = 'flip-card' + (isSpecial ? ' special-card' : '');
+        card.setAttribute('data-index', i);
+
+        card.innerHTML =
+          '<div class="flip-card-inner" id="card-' + i + '">' +
+            '<div class="flip-card-front">' +
+              '<div class="card-pattern"></div>' +
+              '<span class="text-4xl text-white/40 font-black select-none">' + (i + 1) + '</span>' +
+            '</div>' +
+            '<div class="flip-card-back" style="border-color:' + pet.rarity_color + '">' +
+              (isSpecial
+                ? '<div class="sparkle-dot" style="top:8%;left:15%;animation-delay:0s"></div>' +
+                  '<div class="sparkle-dot" style="top:12%;right:18%;animation-delay:0.4s"></div>' +
+                  '<div class="sparkle-dot" style="bottom:15%;left:20%;animation-delay:0.8s"></div>' +
+                  '<div class="sparkle-dot" style="bottom:10%;right:15%;animation-delay:1.2s"></div>'
+                : '') +
+              '<span class="text-4xl sm:text-5xl select-none leading-none">' + pet.emoji + '</span>' +
+              '<p class="text-sm font-bold text-gray-800 mt-1 text-center">' + pet.breed_name + '</p>' +
+              '<span class="text-xs font-bold px-2.5 py-0.5 rounded-full border-2" ' +
+                'style="color:' + pet.rarity_color + ';border-color:' + pet.rarity_color + ';background-color:' + pet.rarity_color + '18">' +
+                pet.rarity_label +
+              '</span>' +
+              '<span class="text-xs text-gray-500 font-medium">' + pet.personality + ' ' + pet.personality_label + '</span>' +
+              (pet.is_active
+                ? '<span class="text-[10px] text-rose-500 font-bold mt-0.5">★ 대표 펫</span>'
+                : '') +
+            '</div>' +
+          '</div>';
+
+        cardsContainer.appendChild(card);
+      }
+
+      // Flip cards one by one
+      flipCards(pets.length);
+    })
+    .catch(function(err) {
+      console.error(err);
+      alert('오류가 발생했어요. 다시 시도해주세요.');
+      pullBtn.disabled = false;
+      pullBtn.textContent = '🎰 10연차 뽑기!';
+    });
+  }
+
+  function flipCards(total) {
+    var i = 0;
+    var interval = setInterval(function() {
+      if (i >= total) {
+        clearInterval(interval);
+        // Show post actions after short delay
+        setTimeout(function() {
+          postActions.classList.remove('hidden');
+          // Update pull again button state
+          var remaining = parseInt(ticketEl.textContent, 10);
+          if (remaining < 10) {
+            pullAgainBtn.disabled = true;
+            pullAgainBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            pullAgainBtn.textContent = '리롤권 부족 (' + remaining + '/10)';
+          }
+        }, 600);
+        return;
+      }
+
+      var cardInner = document.getElementById('card-' + i);
+      if (cardInner) {
+        cardInner.classList.add('flipped');
+
+        // 10th card special effects (index 9)
+        if (i === 9) {
+          specialBanner.classList.remove('hidden');
+
+          var flipCard = cardInner.closest('.flip-card');
+          if (flipCard) {
+            flipCard.classList.add('shake-anim');
+          }
+
+          // Vibration API (mobile)
+          if (navigator.vibrate) {
+            navigator.vibrate([100, 50, 100, 50, 200]);
+          }
+        }
+      }
+
+      i++;
+    }, 500);
+  }
+
+  pullBtn.addEventListener('click', doPull);
+
+  pullAgainBtn.addEventListener('click', function() {
+    postActions.classList.add('hidden');
+    cardGrid.classList.add('hidden');
+    specialBanner.classList.add('hidden');
+    pullSection.classList.remove('hidden');
+    pullBtn.disabled = false;
+    pullBtn.textContent = '🎰 10연차 뽑기!';
+    var remaining = parseInt(ticketEl.textContent, 10);
+    if (remaining < 10) {
+      pullBtn.disabled = true;
+    }
+    doPull();
+  });
+})();
+</script>
+{% endblock %}

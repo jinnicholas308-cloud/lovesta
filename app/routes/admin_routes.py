@@ -1,12 +1,16 @@
 """
-Admin routes: dashboard, user management, memory management, activity logs.
-Access restricted to users with is_admin=True.
+Admin routes: dashboard, user/memory/couple management, inquiry management,
+              pet admin (force rarity, grant tickets), stats.
 """
+from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from app.extensions import db
-from app.models import User, Memory, Couple, Comment
+from app.models import User, Memory, Couple, Comment, Inquiry, Pet
 from app.admin.decorators import admin_required
+from app.utils.email import send_inquiry_reply, send_limit_increase_notification
+from app.utils.pet_generator import admin_force_rarity, admin_grant_tickets
+from app.models.pet import RARITIES, RARITY_ORDER, BREEDS
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -15,16 +19,29 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 @login_required
 @admin_required
 def dashboard():
-    from datetime import datetime, timedelta
     stats = {
         'users': User.query.count(),
         'couples': Couple.query.count(),
         'memories': Memory.query.count(),
         'comments': Comment.query.count(),
+        'inquiries_pending': Inquiry.query.filter_by(status='pending').count(),
+        'pets_total': Pet.query.count(),
     }
+
+    from datetime import timedelta
     week_ago = datetime.utcnow() - timedelta(days=7)
     stats['new_users_week'] = User.query.filter(User.created_at >= week_ago).count()
     stats['new_memories_week'] = Memory.query.filter(Memory.created_at >= week_ago).count()
+
+    # 펫 등급별 생성 수
+    pet_stats = {}
+    for rarity in RARITY_ORDER:
+        pet_stats[rarity] = {
+            'count': Pet.query.filter_by(rarity=rarity).count(),
+            'label': RARITIES[rarity]['label'],
+            'color': RARITIES[rarity]['color'],
+        }
+    stats['pet_stats'] = pet_stats
 
     recent_users = User.query.order_by(User.created_at.desc()).limit(5).all()
     recent_memories = Memory.query.order_by(Memory.created_at.desc()).limit(5).all()
@@ -34,6 +51,8 @@ def dashboard():
                            recent_users=recent_users,
                            recent_memories=recent_memories)
 
+
+# ── 유저 관리 ──
 
 @admin_bp.route('/users')
 @login_required
@@ -76,7 +95,6 @@ def toggle_admin(user_id):
 @login_required
 @admin_required
 def reset_user_password(user_id):
-    """관리자가 특정 유저의 비밀번호를 임시 비밀번호로 초기화."""
     user = User.query.get_or_404(user_id)
     new_pw = request.form.get('new_password', '').strip()
     if not new_pw or len(new_pw) < 6:
@@ -95,7 +113,6 @@ def reset_user_password(user_id):
 @login_required
 @admin_required
 def delete_user(user_id):
-    """유저 계정 삭제 (본인 삭제 불가)."""
     user = User.query.get_or_404(user_id)
     if user.id == current_user.id:
         flash('자기 자신은 삭제할 수 없습니다.', 'error')
@@ -106,6 +123,23 @@ def delete_user(user_id):
     flash(f'{username} 계정이 삭제되었습니다.', 'info')
     return redirect(url_for('admin.user_list'))
 
+
+@admin_bp.route('/users/<int:user_id>/grant-tickets', methods=['POST'])
+@login_required
+@admin_required
+def grant_tickets(user_id):
+    """어드민: 유저에게 리롤권 수동 지급."""
+    user = User.query.get_or_404(user_id)
+    amount = request.form.get('amount', 0, type=int)
+    if amount < 1 or amount > 100:
+        flash('1~100 사이로 입력해주세요.', 'error')
+        return redirect(url_for('admin.user_list'))
+    total = admin_grant_tickets(user, amount)
+    flash(f'{user.username}에게 리롤권 {amount}장 지급 (현재: {total}장)', 'success')
+    return redirect(url_for('admin.user_list'))
+
+
+# ── 추억 관리 ──
 
 @admin_bp.route('/memories')
 @login_required
@@ -122,10 +156,136 @@ def memory_list():
 @login_required
 @admin_required
 def delete_memory(memory_id):
-    from app.utils.file_handler import delete_image
+    from app.utils.file_handler import delete_image, delete_video
     memory = Memory.query.get_or_404(memory_id)
-    delete_image(memory.image_path)
+    mt = getattr(memory, 'media_type', 'image') or 'image'
+    if mt == 'video':
+        delete_video(memory.image_path)
+    else:
+        delete_image(memory.image_path)
     db.session.delete(memory)
     db.session.commit()
     flash('추억이 삭제되었습니다.', 'info')
     return redirect(url_for('admin.memory_list'))
+
+
+# ── 커플 관리 ──
+
+@admin_bp.route('/couples')
+@login_required
+@admin_required
+def couple_list():
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('q', '').strip()
+
+    query = Couple.query
+    if search:
+        query = query.filter(Couple.invite_code.ilike(f'%{search}%'))
+
+    couples = query.order_by(Couple.created_at.desc()).paginate(
+        page=page, per_page=20, error_out=False
+    )
+    return render_template('admin/couples.html', couples=couples, search=search)
+
+
+@admin_bp.route('/couples/<int:couple_id>/set-limit', methods=['POST'])
+@login_required
+@admin_required
+def set_couple_limit(couple_id):
+    """커플 인원 제한 수 변경."""
+    couple = Couple.query.get_or_404(couple_id)
+    new_limit = request.form.get('max_members', 2, type=int)
+    if new_limit < 2 or new_limit > 10:
+        flash('2~10 사이로 설정해주세요.', 'error')
+        return redirect(url_for('admin.couple_list'))
+
+    old_limit = couple.max_members or 2
+    couple.max_members = new_limit
+    db.session.commit()
+
+    # 등급별 테마 색상 적용 HTML 메일 발송
+    if new_limit > old_limit:
+        send_limit_increase_notification(couple, new_limit)
+
+    flash(f'커플 {couple.invite_code}의 인원 제한이 {new_limit}명으로 변경되었습니다.', 'success')
+    return redirect(url_for('admin.couple_list'))
+
+
+@admin_bp.route('/couples/<int:couple_id>/force-pet', methods=['POST'])
+@login_required
+@admin_required
+def force_pet(couple_id):
+    """어드민: 특정 커플에 희귀도 강제 지정 펫 부여."""
+    couple = Couple.query.get_or_404(couple_id)
+    rarity = request.form.get('rarity', 'rare')
+    breed = request.form.get('breed', '')
+
+    pet = admin_force_rarity(couple, rarity, breed if breed else None)
+    if pet:
+        flash(f'커플 {couple.invite_code}에 {RARITIES[rarity]["label"]} {pet.breed_info["name"]} 지급!', 'success')
+    else:
+        flash('유효하지 않은 희귀도입니다.', 'error')
+
+    return redirect(url_for('admin.couple_list'))
+
+
+# ── 문의 관리 ──
+
+@admin_bp.route('/inquiries')
+@login_required
+@admin_required
+def inquiry_list():
+    page = request.args.get('page', 1, type=int)
+    status_filter = request.args.get('status', '')
+
+    query = Inquiry.query
+    if status_filter:
+        query = query.filter_by(status=status_filter)
+
+    inquiries = query.order_by(Inquiry.created_at.desc()).paginate(
+        page=page, per_page=20, error_out=False
+    )
+    return render_template('admin/inquiries.html',
+                           inquiries=inquiries, status_filter=status_filter)
+
+
+@admin_bp.route('/inquiries/<int:inquiry_id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def inquiry_detail(inquiry_id):
+    inquiry = Inquiry.query.get_or_404(inquiry_id)
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+
+        if action == 'reply':
+            reply_text = request.form.get('reply', '').strip()
+            if reply_text:
+                inquiry.admin_reply = reply_text
+                inquiry.replied_at = datetime.utcnow()
+                inquiry.status = 'answered'
+                db.session.commit()
+
+                # 유저에게 답변 메일 발송
+                send_inquiry_reply(inquiry, reply_text)
+                flash('답변이 전송되었습니다!', 'success')
+
+        elif action == 'close':
+            inquiry.status = 'closed'
+            db.session.commit()
+            flash('문의가 종료 처리되었습니다.', 'info')
+
+        elif action == 'increase_limit':
+            # 문의에서 바로 커플 인원 증설
+            if inquiry.couple_id:
+                couple = Couple.query.get(inquiry.couple_id)
+                if couple:
+                    new_limit = request.form.get('new_limit', 2, type=int)
+                    couple.max_members = max(2, min(10, new_limit))
+                    db.session.commit()
+                    send_limit_increase_notification(couple, couple.max_members)
+                    flash(f'커플 인원이 {couple.max_members}명으로 증설되었습니다!', 'success')
+
+        return redirect(url_for('admin.inquiry_detail', inquiry_id=inquiry_id))
+
+    return render_template('admin/inquiry_detail.html', inquiry=inquiry)

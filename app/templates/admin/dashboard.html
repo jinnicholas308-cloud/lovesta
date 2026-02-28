@@ -25,28 +25,75 @@
       <p class="text-xs text-green-500 mt-0.5">+{{ stats.new_memories_week }} 이번 주</p>
     </div>
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center">
-      <p class="text-3xl font-bold text-blue-500">{{ stats.comments }}</p>
-      <p class="text-xs text-gray-400 mt-1">전체 댓글</p>
+      <p class="text-3xl font-bold text-amber-500">{{ stats.pets_total }}</p>
+      <p class="text-xs text-gray-400 mt-1">펫 생성 수</p>
     </div>
   </div>
 
-  <!-- Quick Links -->
+  <!-- 문의 + 댓글 미니 stat -->
   <div class="grid grid-cols-2 gap-4">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-yellow-50 flex items-center justify-center text-xl">📨</div>
+      <div>
+        <p class="text-2xl font-bold text-yellow-600">{{ stats.inquiries_pending }}</p>
+        <p class="text-xs text-gray-400">대기 중 문의</p>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-xl">💬</div>
+      <div>
+        <p class="text-2xl font-bold text-blue-500">{{ stats.comments }}</p>
+        <p class="text-xs text-gray-400">전체 댓글</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 펫 등급별 생성 통계 -->
+  {% if stats.pet_stats %}
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+    <h2 class="font-semibold text-gray-700 mb-3">🐾 펫 등급별 생성 현황</h2>
+    <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+      {% for rarity, data in stats.pet_stats.items() %}
+      <div class="text-center p-3 rounded-xl" style="background: {{ data.color }}10;">
+        <p class="text-2xl font-bold" style="color: {{ data.color }};">{{ data.count }}</p>
+        <p class="text-xs font-semibold mt-1" style="color: {{ data.color }};">{{ data.label }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Quick Links -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
     <a href="{{ url_for('admin.user_list') }}"
        class="bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-md hover:border-rose-200 transition block group">
       <p class="font-semibold text-gray-700 group-hover:text-rose-500 transition">👥 유저 관리</p>
-      <p class="text-sm text-gray-400 mt-1">계정 조회·비밀번호 재설정·권한 관리</p>
+      <p class="text-xs text-gray-400 mt-1">계정 조회·권한 관리</p>
     </a>
     <a href="{{ url_for('admin.memory_list') }}"
        class="bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-md hover:border-rose-200 transition block group">
       <p class="font-semibold text-gray-700 group-hover:text-rose-500 transition">🖼️ 추억 관리</p>
-      <p class="text-sm text-gray-400 mt-1">전체 추억 조회 및 부적절한 콘텐츠 삭제</p>
+      <p class="text-xs text-gray-400 mt-1">콘텐츠 조회·삭제</p>
+    </a>
+    <a href="{{ url_for('admin.couple_list') }}"
+       class="bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-md hover:border-rose-200 transition block group">
+      <p class="font-semibold text-gray-700 group-hover:text-rose-500 transition">💑 커플 관리</p>
+      <p class="text-xs text-gray-400 mt-1">인원 증설·펫 지급</p>
+    </a>
+    <a href="{{ url_for('admin.inquiry_list') }}"
+       class="bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-md hover:border-rose-200 transition block group relative">
+      <p class="font-semibold text-gray-700 group-hover:text-rose-500 transition">📨 문의 관리</p>
+      <p class="text-xs text-gray-400 mt-1">문의 답변·처리</p>
+      {% if stats.inquiries_pending > 0 %}
+      <span class="absolute top-3 right-3 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold">
+        {{ stats.inquiries_pending }}
+      </span>
+      {% endif %}
     </a>
   </div>
 
-  <!-- Recent Activity (two columns) -->
+  <!-- Recent Activity -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
     <!-- 최근 가입 유저 -->
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
       <h2 class="font-semibold text-gray-700 mb-3 flex items-center gap-2">
@@ -62,7 +109,10 @@
             <p class="text-sm font-medium text-gray-700 truncate">{{ u.username }}</p>
             <p class="text-xs text-gray-400 truncate">{{ u.email }}</p>
           </div>
-          <span class="text-xs text-gray-300 shrink-0">{{ u.created_at.strftime('%m.%d') }}</span>
+          <div class="text-right shrink-0">
+            <span class="text-xs text-gray-300">{{ u.created_at.strftime('%m.%d') }}</span>
+            <p class="text-xs text-amber-500 font-medium">🎫 {{ u.reroll_tickets or 0 }}</p>
+          </div>
         </div>
         {% endfor %}
       </div>
@@ -101,7 +151,6 @@
         전체 보기 →
       </a>
     </div>
-
   </div>
 </div>
 {% endblock %}

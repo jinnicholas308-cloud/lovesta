@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block title %}문의 상세{% endblock %}
+
+{% block content %}
+<div class="space-y-5">
+  <!-- 헤더 -->
+  <div class="flex items-center gap-3 flex-wrap">
+    <a href="{{ url_for('admin.inquiry_list') }}" class="text-sm text-gray-400 hover:text-rose-500">← 문의 목록</a>
+    <span class="text-xs px-2 py-0.5 rounded-full border
+      {% if inquiry.status == 'pending' %}bg-yellow-50 text-yellow-600 border-yellow-200
+      {% elif inquiry.status == 'answered' %}bg-green-50 text-green-600 border-green-200
+      {% else %}bg-gray-50 text-gray-500 border-gray-200{% endif %}">
+      {{ inquiry.status_label }}
+    </span>
+    <span class="bg-rose-50 text-rose-500 text-xs px-2 py-0.5 rounded-full">{{ inquiry.category_label }}</span>
+  </div>
+
+  <!-- 문의 내용 카드 -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
+    <h2 class="text-lg font-bold text-gray-800">{{ inquiry.subject }}</h2>
+
+    <div class="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed bg-gray-50 rounded-xl p-4">{{ inquiry.body }}</div>
+
+    <!-- 작성자 정보 -->
+    <div class="border-t border-gray-100 pt-4 flex items-center gap-4 flex-wrap text-sm">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center text-rose-500 font-semibold text-xs shrink-0">
+          {{ inquiry.author.username[0].upper() }}
+        </div>
+        <div>
+          <p class="font-medium text-gray-700">{{ inquiry.author.username }}</p>
+          <p class="text-xs text-gray-400">{{ inquiry.author.email }}</p>
+        </div>
+      </div>
+      {% if inquiry.couple_id %}
+      <span class="bg-pink-50 text-pink-500 text-xs px-2 py-0.5 rounded-full">커플 #{{ inquiry.couple_id }}</span>
+      {% endif %}
+      <span class="text-xs text-gray-400 ml-auto">{{ inquiry.created_at.strftime('%Y.%m.%d %H:%M') }}</span>
+    </div>
+  </div>
+
+  <!-- 기존 답변 표시 -->
+  {% if inquiry.admin_reply %}
+  <div class="bg-green-50 border border-green-200 rounded-2xl p-5 space-y-2">
+    <div class="flex items-center gap-2">
+      <span class="text-green-600 font-semibold text-sm">✅ 관리자 답변</span>
+      {% if inquiry.replied_at %}
+      <span class="text-xs text-green-400">{{ inquiry.replied_at.strftime('%Y.%m.%d %H:%M') }}</span>
+      {% endif %}
+    </div>
+    <div class="text-sm text-green-700 whitespace-pre-wrap leading-relaxed">{{ inquiry.admin_reply }}</div>
+  </div>
+  {% endif %}
+
+  <!-- 인원 증설 폼 (increase_limit 카테고리 + couple_id 존재 시) -->
+  {% if inquiry.category == 'increase_limit' and inquiry.couple_id %}
+  <div class="bg-pink-50 border border-pink-200 rounded-2xl p-5 space-y-3">
+    <h3 class="font-semibold text-pink-600 text-sm">🏠 인원 증설</h3>
+    <form method="POST" action="{{ url_for('admin.inquiry_detail', inquiry_id=inquiry.id) }}"
+          class="flex items-center gap-3 flex-wrap">
+      <input type="hidden" name="action" value="increase_limit" />
+      <label class="text-sm text-gray-600">새 인원 제한:</label>
+      <input type="number" name="new_limit" min="2" max="10" value="3"
+             class="w-20 border border-pink-200 rounded-lg px-3 py-1.5 text-sm text-center
+                    focus:outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition" />
+      <span class="text-xs text-gray-400">명 (2~10)</span>
+      <button type="submit"
+              class="bg-pink-500 hover:bg-pink-600 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition"
+              onclick="return confirm('인원을 증설하시겠습니까?')">
+        인원 증설
+      </button>
+    </form>
+  </div>
+  {% endif %}
+
+  <!-- 답변 폼 -->
+  {% if inquiry.status != 'closed' %}
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-3">
+    <h3 class="font-semibold text-gray-700 text-sm">💬 답변 작성</h3>
+    <form method="POST" action="{{ url_for('admin.inquiry_detail', inquiry_id=inquiry.id) }}" class="space-y-3">
+      <input type="hidden" name="action" value="reply" />
+      <textarea name="reply" rows="5" required placeholder="답변 내용을 입력하세요..."
+                class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm
+                       focus:outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100
+                       transition resize-y">{{ inquiry.admin_reply or '' }}</textarea>
+      <div class="flex items-center gap-3">
+        <button type="submit"
+                class="bg-rose-500 hover:bg-rose-600 text-white text-sm font-medium px-5 py-2 rounded-xl transition">
+          답변 전송
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- 종료 버튼 -->
+  <div class="flex justify-end">
+    <form method="POST" action="{{ url_for('admin.inquiry_detail', inquiry_id=inquiry.id) }}">
+      <input type="hidden" name="action" value="close" />
+      <button type="submit"
+              class="border border-gray-200 hover:border-gray-400 text-gray-500 hover:text-gray-700 text-sm font-medium px-4 py-2 rounded-xl transition"
+              onclick="return confirm('문의를 종료 처리하시겠습니까?')">
+        🔒 문의 종료
+      </button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
