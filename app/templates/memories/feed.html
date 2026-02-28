@@ -2,39 +2,48 @@
 {% block title %}피드{% endblock %}
 
 {% block content %}
-<!-- Header bar -->
-<div class="flex items-center justify-between mb-6">
+
+<!-- ── 피드 헤더 ── -->
+<div class="flex items-center justify-between mb-6 slide-up">
   <div>
-    <h1 class="text-xl font-bold text-gray-800">
-      {{ couple.couple_name or '우리의 추억' }}
+    {% if couple %}
+    <h1 class="text-xl font-black text-gray-800 gradient-text">
+      {{ couple.couple_name or '우리의 추억 ♥' }}
     </h1>
     {% if couple.days_together is not none %}
-    <p class="text-sm text-rose-400">함께한 지 {{ couple.days_together }}일 ♥</p>
+    <p class="text-sm text-rose-400 font-medium mt-0.5">
+      <span data-i18n="feed.together_for">함께한 지</span>
+      <span class="font-black">{{ couple.days_together }}</span>
+      <span data-i18n="feed.days_label">일 ♥</span>
+    </p>
+    {% endif %}
+    {% else %}
+    <h1 class="text-xl font-black text-gray-800">Lovesta 💕</h1>
     {% endif %}
   </div>
   <a href="{{ url_for('memories.upload') }}"
-     class="bg-rose-500 hover:bg-rose-600 text-white text-sm font-medium px-4 py-2 rounded-full transition">
-    + 추억 추가
-  </a>
+     class="gradient-rose text-white text-sm font-semibold px-5 py-2 rounded-full shadow-sm hover:opacity-90 active:scale-95 transition-all"
+     data-i18n="feed.add">+ 추억 추가</a>
 </div>
 
 {% if memories.items %}
-<!-- Grid -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+<!-- ── 추억 그리드 ── -->
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4">
   {% for memory in memories.items %}
   <a href="{{ url_for('memories.detail', memory_id=memory.id) }}"
-     class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block">
-    <div class="aspect-square overflow-hidden bg-gradient-to-br from-rose-50 to-pink-100">
+     class="memory-card bg-white rounded-2xl overflow-hidden block"
+     style="animation-delay: {{ loop.index0 * 0.05 }}s">
+
+    <!-- 이미지 영역 -->
+    <div class="aspect-square overflow-hidden bg-gradient-to-br from-rose-50 to-pink-100 relative">
       {% if memory.image_path %}
         {% if memory.image_path.startswith('http') %}
-        {# Cloudinary URL: 직접 사용 #}
-        <img src="{{ memory.image_path }}"
-             alt="추억 사진" class="w-full h-full object-cover"
+        <img src="{{ memory.image_path }}" alt="추억"
+             class="card-img w-full h-full object-cover"
              onerror="this.parentElement.innerHTML='<div class=\'flex items-center justify-center w-full h-full\'><span class=\'text-5xl\'>💝</span></div>'" />
         {% else %}
-        {# 로컬 파일: 없으면 💝 placeholder (Railway 대응) #}
-        <img src="{{ url_for('memories.uploaded_file', filename=memory.image_path) }}"
-             alt="추억 사진" class="w-full h-full object-cover"
+        <img src="{{ url_for('memories.uploaded_file', filename=memory.image_path) }}" alt="추억"
+             class="card-img w-full h-full object-cover"
              onerror="this.parentElement.innerHTML='<div class=\'flex items-center justify-center w-full h-full\'><span class=\'text-5xl\'>💝</span></div>'" />
         {% endif %}
       {% else %}
@@ -42,22 +51,29 @@
         <span class="text-5xl">💝</span>
       </div>
       {% endif %}
+
+      <!-- 좋아요 뱃지 (이미지 위 오버레이) -->
+      {% if memory.like_count() > 0 %}
+      <div class="absolute bottom-2 right-2 bg-black/40 backdrop-blur-sm text-white text-xs px-2 py-0.5 rounded-full font-medium">
+        ♥ {{ memory.like_count() }}
+      </div>
+      {% endif %}
     </div>
 
+    <!-- 텍스트 영역 -->
     <div class="p-3">
-      <p class="text-sm text-gray-700 line-clamp-2">{{ memory.caption }}</p>
+      <p class="text-sm text-gray-700 font-medium line-clamp-2 leading-snug">{{ memory.caption }}</p>
       <div class="flex items-center justify-between mt-2">
         <div class="flex items-center gap-1 text-xs text-gray-400">
           {% if memory.location %}
-          <span>📍 {{ memory.location }}</span>
+          <span class="line-clamp-1 max-w-[90px]">📍 {{ memory.location }}</span>
           {% endif %}
         </div>
-        <div class="flex items-center gap-2 text-xs text-gray-400">
-          <span>♥ {{ memory.like_count() }}</span>
+        <div class="flex items-center gap-1.5 text-xs text-gray-400">
           <span>💬 {{ memory.comments.count() }}</span>
         </div>
       </div>
-      <p class="text-xs text-gray-300 mt-1">
+      <p class="text-xs text-gray-300 mt-1.5 font-medium">
         {{ memory.created_at.strftime('%Y.%m.%d') }}
       </p>
     </div>
@@ -65,36 +81,37 @@
   {% endfor %}
 </div>
 
-<!-- Pagination -->
+<!-- ── 페이지네이션 ── -->
 {% if memories.pages > 1 %}
-<div class="flex justify-center gap-2 mt-8">
+<div class="flex justify-center items-center gap-3 mt-8">
   {% if memories.has_prev %}
   <a href="{{ url_for('memories.feed', page=memories.prev_num) }}"
-     class="px-4 py-2 text-sm bg-white border border-gray-200 rounded-lg hover:border-rose-300 transition">
-    이전
-  </a>
+     class="px-5 py-2 text-sm bg-white border border-gray-200 rounded-full hover:border-rose-300 hover:text-rose-500 transition-colors font-medium"
+     data-i18n="feed.prev">이전</a>
   {% endif %}
-  <span class="px-4 py-2 text-sm text-gray-500">
-    {{ memories.page }} / {{ memories.pages }}
-  </span>
+  <span class="text-sm text-gray-400 font-medium">{{ memories.page }} / {{ memories.pages }}</span>
   {% if memories.has_next %}
   <a href="{{ url_for('memories.feed', page=memories.next_num) }}"
-     class="px-4 py-2 text-sm bg-white border border-gray-200 rounded-lg hover:border-rose-300 transition">
-    다음
-  </a>
+     class="px-5 py-2 text-sm bg-white border border-gray-200 rounded-full hover:border-rose-300 hover:text-rose-500 transition-colors font-medium"
+     data-i18n="feed.next">다음</a>
   {% endif %}
 </div>
 {% endif %}
 
 {% else %}
-<div class="text-center py-20 text-gray-400">
-  <div class="text-6xl mb-4">📷</div>
-  <p class="font-medium text-gray-500">아직 추억이 없네요</p>
-  <p class="text-sm mt-1">첫 번째 추억을 기록해보세요!</p>
+
+<!-- ── 빈 상태 ── -->
+<div class="text-center py-20 slide-up">
+  <div class="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-rose-100 to-pink-100
+              flex items-center justify-center mb-5 shadow-inner">
+    <span class="text-4xl">📷</span>
+  </div>
+  <p class="font-bold text-gray-600 text-lg" data-i18n="feed.empty_title">아직 추억이 없네요</p>
+  <p class="text-sm text-gray-400 mt-1.5" data-i18n="feed.empty_sub">첫 번째 추억을 기록해보세요!</p>
   <a href="{{ url_for('memories.upload') }}"
-     class="inline-block mt-4 bg-rose-500 hover:bg-rose-600 text-white text-sm font-medium px-6 py-2.5 rounded-full transition">
-    첫 추억 업로드
-  </a>
+     class="inline-block mt-6 gradient-rose text-white text-sm font-semibold px-8 py-3 rounded-full shadow-md hover:opacity-90 active:scale-95 transition-all"
+     data-i18n="feed.first_upload">첫 추억 업로드</a>
 </div>
+
 {% endif %}
 {% endblock %}
