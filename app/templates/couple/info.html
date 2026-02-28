@@ -74,6 +74,67 @@
     </div>
   </div>
 
+  <!-- ── 우리 펫 ── -->
+  {% set pet = couple.pet_info %}
+  <div class="bg-white rounded-2xl shadow-sm border border-rose-50 p-6 slide-up" style="animation-delay:.12s">
+    <h2 class="font-bold text-gray-500 text-xs uppercase tracking-widest mb-4"
+        data-i18n="profile.pet">우리 펫 🐾</h2>
+
+    <div class="flex items-center gap-5">
+      <!-- 펫 이모지 (크게) -->
+      <div class="flex-shrink-0 flex items-center justify-center
+                  w-24 h-24 rounded-2xl bg-gradient-to-br from-rose-50 to-pink-100">
+        <span class="{{ pet.size }} float-anim leading-none select-none">{{ pet.emoji }}</span>
+      </div>
+
+      <!-- 펫 정보 -->
+      <div class="flex-1">
+        <div class="flex items-baseline gap-2">
+          <p class="font-black text-gray-800 text-lg">{{ pet.name }}</p>
+          <span class="text-xs bg-rose-100 text-rose-500 px-2 py-0.5 rounded-full font-semibold">
+            {{ pet.stage }}
+          </span>
+        </div>
+
+        <p class="text-sm text-gray-500 mt-1">
+          <span data-i18n="couple.together_for">함께한 지</span>
+          <span class="font-bold text-gray-700">{{ pet.days }}</span>
+          <span data-i18n="couple.day_unit">일</span>
+        </p>
+
+        <!-- 성장 프로그레스 바 -->
+        {% if pet.stage == '알' %}
+          {% set pct = (pet.days / 7 * 100) | int %}
+          <p class="text-xs text-rose-400 mt-1.5 font-medium" data-i18n="pet.hatching">곧 깨어나요 🥚</p>
+        {% elif pet.stage == '아기' %}
+          {% set pct = ((pet.days - 7) / 23 * 100) | int %}
+          <p class="text-xs text-pink-400 mt-1.5 font-medium">쑥쑥 자라는 중 🍼</p>
+        {% elif pet.stage == '아이' %}
+          {% set pct = ((pet.days - 30) / 70 * 100) | int %}
+          <p class="text-xs text-amber-400 mt-1.5 font-medium">활발하게 놀고 있어요 🎈</p>
+        {% elif pet.stage == '청소년' %}
+          {% set pct = ((pet.days - 100) / 265 * 100) | int %}
+          <p class="text-xs text-purple-400 mt-1.5 font-medium">멋지게 성장 중 ✨</p>
+        {% else %}
+          {% set pct = 100 %}
+          <p class="text-xs text-rose-400 mt-1.5 font-medium" data-i18n="pet.grown">다 컸어요! 🎉</p>
+        {% endif %}
+
+        <!-- 성장 게이지 -->
+        <div class="mt-2 h-1.5 bg-rose-100 rounded-full overflow-hidden">
+          <div class="h-full bg-gradient-to-r from-rose-400 to-pink-400 rounded-full transition-all"
+               style="width: {{ [pct, 100] | min }}%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 펫 이름 표시 (커스텀 이름이 있을 때) -->
+    {% if couple.pet_name %}
+    <p class="mt-4 text-xs text-center text-gray-400"
+       data-i18n="pet.caption">우리의 소중한 펫이에요 💕</p>
+    {% endif %}
+  </div>
+
   <!-- ── 커플 초대 코드 ── -->
   <div class="bg-white rounded-2xl shadow-sm border border-rose-50 p-5 slide-up" style="animation-delay:.14s">
     <p class="text-xs text-gray-400 text-center uppercase tracking-widest font-semibold mb-3"
