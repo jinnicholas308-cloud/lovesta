@@ -57,7 +57,7 @@ class Config:
     SQLALCHEMY_DATABASE_URI = _DB_URL
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     UPLOAD_FOLDER = _resolve_upload_dir()
-    MAX_CONTENT_LENGTH = int(os.getenv('MAX_CONTENT_LENGTH', 16 * 1024 * 1024))
+    MAX_CONTENT_LENGTH = int(os.getenv('MAX_CONTENT_LENGTH', 100 * 1024 * 1024))  # 100MB (동영상)
 
     # PostgreSQL 연결 안정성 (Railway 재시작 후 끊긴 커넥션 자동 복구)
     SQLALCHEMY_ENGINE_OPTIONS = {

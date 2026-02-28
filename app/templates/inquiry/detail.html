@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}{{ inquiry.subject[:30] }}{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto space-y-4">
+
+  <!-- Back -->
+  <a href="{{ url_for('inquiry.list_inquiries') }}"
+     class="text-sm text-gray-400 hover:text-rose-500 transition flex items-center gap-1 slide-up">
+    &larr; 문의 목록으로
+  </a>
+
+  <!-- Inquiry Card -->
+  <div class="bg-white rounded-2xl shadow-sm border border-rose-50 p-6 slide-up" style="animation-delay:.05s">
+
+    <!-- Badges -->
+    <div class="flex items-center gap-2 mb-4 flex-wrap">
+      <span class="text-xs bg-rose-50 text-rose-500 px-2.5 py-0.5 rounded-full font-medium border border-rose-100">
+        {{ inquiry.category_label }}
+      </span>
+      <span class="text-xs px-2.5 py-0.5 rounded-full font-medium border {{ inquiry.status_color }}">
+        {{ inquiry.status_label }}
+      </span>
+    </div>
+
+    <!-- Subject -->
+    <h1 class="text-lg font-bold text-gray-800 mb-3">{{ inquiry.subject }}</h1>
+
+    <!-- Body -->
+    <div class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap mb-4">{{ inquiry.body }}</div>
+
+    <!-- Created Date -->
+    <p class="text-xs text-gray-400 font-medium border-t border-gray-100 pt-3">
+      {{ inquiry.created_at.strftime('%Y년 %m월 %d일 %H:%M') }}
+    </p>
+  </div>
+
+  <!-- Admin Reply -->
+  {% if inquiry.admin_reply %}
+  <div class="bg-green-50 rounded-2xl shadow-sm border border-green-200 p-6 slide-up" style="animation-delay:.1s">
+    <div class="flex items-center gap-2 mb-3">
+      <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 text-sm font-bold">A</div>
+      <div>
+        <p class="text-sm font-semibold text-green-700">관리자 답변</p>
+        {% if inquiry.replied_at %}
+        <p class="text-xs text-green-500">{{ inquiry.replied_at.strftime('%Y년 %m월 %d일 %H:%M') }}</p>
+        {% endif %}
+      </div>
+    </div>
+    <div class="text-sm text-green-800 leading-relaxed whitespace-pre-wrap">{{ inquiry.admin_reply }}</div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

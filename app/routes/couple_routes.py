@@ -48,9 +48,23 @@ def setup():
             if not couple:
                 flash('유효하지 않은 커플 코드입니다.', 'error')
                 return render_template('couple/setup.html')
-            if couple.members.count() >= 2:
-                flash('이미 2명이 연결된 코드입니다.', 'error')
-                return render_template('couple/setup.html')
+
+            # max_members 기반 제한 (기본 2명)
+            max_m = getattr(couple, 'max_members', 2) or 2
+            current_count = couple.members.count()
+
+            if current_count >= max_m:
+                # 보안: 최신 가입순으로 max_m명만 유지, 나머지 차단
+                ordered = couple.members.order_by(User.created_at.desc()).all()
+                if current_count > max_m:
+                    for overflow_user in ordered[max_m:]:
+                        overflow_user.couple_id = None
+                    db.session.commit()
+
+                # 재확인
+                if couple.members.count() >= max_m:
+                    flash(f'이미 {max_m}명이 연결된 코드입니다. 인원 증설이 필요하면 문의해주세요.', 'error')
+                    return render_template('couple/setup.html')
 
             current_user.couple_id = couple.id
             db.session.commit()

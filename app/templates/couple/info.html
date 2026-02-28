@@ -1,6 +1,12 @@
 {% extends 'base.html' %}
 {% block title %}우리 커플{% endblock %}
 
+{% block og_meta %}
+{% set pet = couple.pet_info %}
+<meta property="og:title" content="{{ couple.couple_name or 'Lovesta' }} — D+{{ days_together }}" />
+<meta property="og:description" content="우리 커플은 {{ pet.rarity_info.label if pet.rarity_info else '커먼' }} {{ pet.name }} {{ pet.emoji }}을(를) 키워요! D+{{ days_together }}일 💕" />
+{% endblock %}
+
 {% block content %}
 <div class="max-w-xl mx-auto space-y-5">
 

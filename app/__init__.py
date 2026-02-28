@@ -37,6 +37,9 @@ def create_app(env: str = None):
     from app.routes.couple_routes import couple_bp
     from app.routes.admin_routes import admin_bp
     from app.routes.profile_routes import profile_bp
+    from app.routes.pet_routes import pet_bp
+    from app.routes.inquiry_routes import inquiry_bp
+    from app.routes.attendance_routes import attendance_bp
 
     init_oauth(app)
 
@@ -47,6 +50,9 @@ def create_app(env: str = None):
     app.register_blueprint(couple_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(profile_bp)
+    app.register_blueprint(pet_bp)
+    app.register_blueprint(inquiry_bp)
+    app.register_blueprint(attendance_bp)
 
     with app.app_context():
         try:
@@ -69,12 +75,15 @@ def _run_migrations(app):
 
     # (테이블명, 컬럼명, 컬럼 타입)
     columns_to_add = [
-        ('users',    'birthday',      'DATE'),
-        ('users',    'favorite_food', 'VARCHAR(100)'),
-        ('users',    'bio',           'TEXT'),
-        ('users',    'mbti',          'VARCHAR(4)'),
-        ('couples',  'pet_name',      'VARCHAR(50)'),
-        ('memories', 'media_type',    "VARCHAR(10) DEFAULT 'image' NOT NULL"),
+        ('users',    'birthday',        'DATE'),
+        ('users',    'favorite_food',   'VARCHAR(100)'),
+        ('users',    'bio',             'TEXT'),
+        ('users',    'mbti',            'VARCHAR(4)'),
+        ('users',    'reroll_tickets',  'INTEGER DEFAULT 1 NOT NULL'),
+        ('couples',  'pet_name',        'VARCHAR(50)'),
+        ('couples',  'max_members',     'INTEGER DEFAULT 2 NOT NULL'),
+        ('couples',  'pity_counter',    'INTEGER DEFAULT 0 NOT NULL'),
+        ('memories', 'media_type',      "VARCHAR(10) DEFAULT 'image' NOT NULL"),
     ]
 
     db_url = str(app.config.get('SQLALCHEMY_DATABASE_URI', ''))

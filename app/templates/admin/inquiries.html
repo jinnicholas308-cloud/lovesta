@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}문의 관리{% endblock %}
+
+{% block content %}
+<div class="space-y-4">
+  <div class="flex items-center gap-4 flex-wrap">
+    <a href="{{ url_for('admin.dashboard') }}" class="text-sm text-gray-400 hover:text-rose-500">← 대시보드</a>
+    <h1 class="text-xl font-bold text-gray-800">📨 문의 관리</h1>
+    <span class="text-sm text-gray-400 ml-auto">총 {{ inquiries.total }}건</span>
+  </div>
+
+  <!-- 상태 필터 -->
+  <div class="flex gap-2 flex-wrap">
+    <a href="{{ url_for('admin.inquiry_list') }}"
+       class="px-4 py-1.5 text-sm rounded-full border transition
+              {% if not status_filter %}bg-rose-500 text-white border-rose-500{% else %}bg-white text-gray-500 border-gray-200 hover:border-rose-300{% endif %}">
+      전체
+    </a>
+    <a href="{{ url_for('admin.inquiry_list', status='pending') }}"
+       class="px-4 py-1.5 text-sm rounded-full border transition
+              {% if status_filter == 'pending' %}bg-yellow-500 text-white border-yellow-500{% else %}bg-white text-gray-500 border-gray-200 hover:border-yellow-300{% endif %}">
+      대기중
+    </a>
+    <a href="{{ url_for('admin.inquiry_list', status='answered') }}"
+       class="px-4 py-1.5 text-sm rounded-full border transition
+              {% if status_filter == 'answered' %}bg-green-500 text-white border-green-500{% else %}bg-white text-gray-500 border-gray-200 hover:border-green-300{% endif %}">
+      답변완료
+    </a>
+    <a href="{{ url_for('admin.inquiry_list', status='closed') }}"
+       class="px-4 py-1.5 text-sm rounded-full border transition
+              {% if status_filter == 'closed' %}bg-gray-500 text-white border-gray-500{% else %}bg-white text-gray-500 border-gray-200 hover:border-gray-400{% endif %}">
+      종료
+    </a>
+  </div>
+
+  <!-- 문의 테이블 -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
+    <table class="w-full text-sm min-w-[700px]">
+      <thead class="bg-gray-50 text-gray-500 text-xs uppercase border-b border-gray-100">
+        <tr>
+          <th class="px-4 py-3 text-left w-10">ID</th>
+          <th class="px-4 py-3 text-left">카테고리</th>
+          <th class="px-4 py-3 text-left">제목</th>
+          <th class="px-4 py-3 text-left">작성자</th>
+          <th class="px-4 py-3 text-left">상태</th>
+          <th class="px-4 py-3 text-left">작성일</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-50">
+        {% for inq in inquiries.items %}
+        <tr class="hover:bg-gray-50 cursor-pointer"
+            onclick="location.href='{{ url_for('admin.inquiry_detail', inquiry_id=inq.id) }}'">
+          <td class="px-4 py-3 text-gray-300 text-xs">{{ inq.id }}</td>
+          <td class="px-4 py-3">
+            <span class="bg-rose-50 text-rose-500 text-xs px-2 py-0.5 rounded-full">{{ inq.category_label }}</span>
+          </td>
+          <td class="px-4 py-3">
+            <a href="{{ url_for('admin.inquiry_detail', inquiry_id=inq.id) }}"
+               class="font-medium text-gray-700 hover:text-rose-500 transition">
+              {{ inq.subject }}
+            </a>
+          </td>
+          <td class="px-4 py-3 text-gray-500 text-xs">{{ inq.author.username }}</td>
+          <td class="px-4 py-3">
+            <span class="text-xs px-2 py-0.5 rounded-full border
+              {% if inq.status == 'pending' %}bg-yellow-50 text-yellow-600 border-yellow-200
+              {% elif inq.status == 'answered' %}bg-green-50 text-green-600 border-green-200
+              {% else %}bg-gray-50 text-gray-500 border-gray-200{% endif %}">
+              {{ inq.status_label }}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-gray-400 text-xs">{{ inq.created_at.strftime('%Y.%m.%d %H:%M') }}</td>
+        </tr>
+        {% endfor %}
+        {% if not inquiries.items %}
+        <tr>
+          <td colspan="6" class="px-4 py-10 text-center text-gray-400">문의가 없습니다.</td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 페이지네이션 -->
+  {% if inquiries.pages > 1 %}
+  <div class="flex justify-center gap-2">
+    {% if inquiries.has_prev %}
+    <a href="{{ url_for('admin.inquiry_list', page=inquiries.prev_num, status=status_filter) }}"
+       class="px-3 py-1.5 text-sm bg-white border rounded-lg hover:border-rose-300 transition">이전</a>
+    {% endif %}
+    <span class="px-3 py-1.5 text-sm text-gray-500">{{ inquiries.page }}/{{ inquiries.pages }}</span>
+    {% if inquiries.has_next %}
+    <a href="{{ url_for('admin.inquiry_list', page=inquiries.next_num, status=status_filter) }}"
+       class="px-3 py-1.5 text-sm bg-white border rounded-lg hover:border-rose-300 transition">다음</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
