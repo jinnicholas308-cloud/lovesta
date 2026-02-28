@@ -9,8 +9,8 @@ from flask import (Blueprint, render_template, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from app.extensions import db
 from app.models import Memory, Like, Couple, Comment
-from app.utils.file_handler import save_image, delete_image
-from app.utils.validators import is_allowed_image
+from app.utils.file_handler import save_image, delete_image, save_video, delete_video
+from app.utils.validators import is_allowed_image, is_allowed_video
 
 memories_bp = Blueprint('memories', __name__)
 
@@ -48,21 +48,32 @@ def upload():
         caption = request.form.get('caption', '').strip()
         location = request.form.get('location', '').strip()
         memory_date_str = request.form.get('memory_date', '')
-        file = request.files.get('image')
+        file = request.files.get('media')
 
         if not caption:
             flash('캡션을 입력해주세요.', 'error')
             return render_template('memories/upload.html')
 
-        image_filename = None
+        media_filename = None
+        media_type = 'image'
+
         if file and file.filename:
-            if not is_allowed_image(file.filename):
-                flash('PNG, JPG, GIF, WEBP 파일만 업로드 가능합니다.', 'error')
-                return render_template('memories/upload.html')
-            try:
-                image_filename = save_image(file)
-            except ValueError as e:
-                flash(str(e), 'error')
+            if is_allowed_image(file.filename):
+                try:
+                    media_filename = save_image(file)
+                    media_type = 'image'
+                except ValueError as e:
+                    flash(str(e), 'error')
+                    return render_template('memories/upload.html')
+            elif is_allowed_video(file.filename):
+                try:
+                    media_filename = save_video(file)
+                    media_type = 'video'
+                except ValueError as e:
+                    flash(str(e), 'error')
+                    return render_template('memories/upload.html')
+            else:
+                flash('PNG, JPG, GIF, WEBP 또는 MP4, MOV, AVI, WEBM 파일만 업로드 가능합니다.', 'error')
                 return render_template('memories/upload.html')
 
         memory_date = None
@@ -74,7 +85,8 @@ def upload():
 
         memory = Memory(
             caption=caption,
-            image_path=image_filename,
+            image_path=media_filename,
+            media_type=media_type,
             location=location or None,
             memory_date=memory_date,
             user_id=current_user.id,
@@ -110,7 +122,13 @@ def delete(memory_id):
         flash('삭제 권한이 없습니다.', 'error')
         return redirect(url_for('memories.feed'))
 
-    delete_image(memory.image_path)
+    # media_type에 따라 적절한 삭제 함수 호출
+    mt = getattr(memory, 'media_type', 'image') or 'image'
+    if mt == 'video':
+        delete_video(memory.image_path)
+    else:
+        delete_image(memory.image_path)
+
     db.session.delete(memory)
     db.session.commit()
     flash('추억이 삭제되었습니다.', 'info')

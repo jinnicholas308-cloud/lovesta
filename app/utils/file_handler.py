@@ -158,6 +158,51 @@ def save_image(file) -> str:
         raise ValueError(f'이미지 저장 실패: {e}')
 
 
+def _save_video_to_cloudinary(file) -> str:
+    """Cloudinary에 동영상 업로드 후 secure URL 반환."""
+    import cloudinary
+    import cloudinary.uploader
+
+    if not _configure_cloudinary():
+        raise ValueError('Cloudinary 설정 실패: CLOUDINARY_URL 또는 개별 키를 확인하세요.')
+
+    result = cloudinary.uploader.upload(
+        file,
+        folder='lovesta_videos',
+        resource_type='video',
+    )
+    return result['secure_url']
+
+
+def _save_video_to_local(file) -> str:
+    """로컬 storage/uploads/ 에 동영상 저장 후 파일명 반환."""
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+    os.makedirs(upload_folder, exist_ok=True)
+
+    ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else 'mp4'
+    filename = f"{uuid.uuid4().hex}.{ext}"
+    filepath = os.path.join(upload_folder, filename)
+    file.save(filepath)
+    return filename
+
+
+def save_video(file) -> str:
+    """
+    동영상 저장 (Cloudinary 또는 로컬 자동 선택).
+    반환값:
+      - Cloudinary: 'https://res.cloudinary.com/...' (전체 URL)
+      - 로컬:       'abc123.mp4' (파일명만)
+    """
+    try:
+        if os.getenv('CLOUDINARY_URL') or os.getenv('CLOUDINARY_API_KEY'):
+            return _save_video_to_cloudinary(file)
+        return _save_video_to_local(file)
+    except ValueError:
+        raise
+    except Exception as e:
+        raise ValueError(f'동영상 저장 실패: {e}')
+
+
 def delete_image(image_path: str) -> bool:
     """이미지 삭제 (Cloudinary 또는 로컬 자동 선택)."""
     if not image_path:
@@ -176,6 +221,31 @@ def delete_image(image_path: str) -> bool:
                 return False
     else:
         filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], image_path)
+        if os.path.exists(filepath):
+            os.remove(filepath)
+            return True
+
+    return False
+
+
+def delete_video(video_path: str) -> bool:
+    """동영상 삭제 (Cloudinary 또는 로컬 자동 선택)."""
+    if not video_path:
+        return False
+
+    if video_path.startswith('http'):
+        if os.getenv('CLOUDINARY_URL') or os.getenv('CLOUDINARY_API_KEY'):
+            try:
+                import cloudinary.uploader
+                _configure_cloudinary()
+                parts = video_path.split('/')
+                public_id = 'lovesta_videos/' + parts[-1].rsplit('.', 1)[0]
+                cloudinary.uploader.destroy(public_id, resource_type='video')
+                return True
+            except Exception:
+                return False
+    else:
+        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], video_path)
         if os.path.exists(filepath):
             os.remove(filepath)
             return True

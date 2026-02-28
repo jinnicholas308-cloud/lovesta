@@ -3,6 +3,7 @@
 {% block title %}{{ (memory.caption or '추억')[:30] }}{% endblock %}
 
 {% block content %}
+{% set is_video = (memory.media_type == 'video') if memory.media_type else false %}
 <div class="max-w-xl mx-auto space-y-4">
 
   <!-- Back -->
@@ -13,20 +14,37 @@
 
   <!-- Memory Card -->
   <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+
     {% if memory.image_path %}
-      {% if memory.image_path.startswith('http') %}
-      {# Cloudinary URL: 직접 사용 #}
-      <img src="{{ memory.image_path }}"
-           alt="추억 사진" class="w-full max-h-96 object-cover"
-           onerror="this.style.display='none'" />
+      {% if is_video %}
+        {# ── 동영상 플레이어 ── #}
+        {% if memory.image_path.startswith('http') %}
+        <video src="{{ memory.image_path }}"
+               class="w-full max-h-[500px] bg-black"
+               controls playsinline
+               controlslist="nodownload"
+               preload="metadata"></video>
+        {% else %}
+        <video src="{{ url_for('memories.uploaded_file', filename=memory.image_path) }}"
+               class="w-full max-h-[500px] bg-black"
+               controls playsinline
+               controlslist="nodownload"
+               preload="metadata"></video>
+        {% endif %}
       {% else %}
-      {# 로컬 파일: Railway에서 없을 수 있음 → onerror 숨김 처리 #}
-      <img src="{{ url_for('memories.uploaded_file', filename=memory.image_path) }}"
-           alt="추억 사진" class="w-full max-h-96 object-cover"
-           onerror="this.parentElement.querySelector('.img-fallback').style.display='flex';this.style.display='none'" />
-      <div class="img-fallback hidden bg-gradient-to-br from-rose-50 to-pink-100 h-48 items-center justify-center">
-        <span class="text-5xl">💝</span>
-      </div>
+        {# ── 이미지 ── #}
+        {% if memory.image_path.startswith('http') %}
+        <img src="{{ memory.image_path }}"
+             alt="추억 사진" class="w-full max-h-96 object-cover"
+             onerror="this.style.display='none'" />
+        {% else %}
+        <img src="{{ url_for('memories.uploaded_file', filename=memory.image_path) }}"
+             alt="추억 사진" class="w-full max-h-96 object-cover"
+             onerror="this.parentElement.querySelector('.img-fallback').style.display='flex';this.style.display='none'" />
+        <div class="img-fallback hidden bg-gradient-to-br from-rose-50 to-pink-100 h-48 items-center justify-center">
+          <span class="text-5xl">💝</span>
+        </div>
+        {% endif %}
       {% endif %}
     {% endif %}
 
@@ -46,6 +64,14 @@
             {% endif %}
           </p>
         </div>
+        {% if is_video %}
+        <span class="ml-auto text-xs bg-rose-50 text-rose-400 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+          <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M17 10.5V7a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1v-3.5l4 4v-11l-4 4z"/>
+          </svg>
+          동영상
+        </span>
+        {% endif %}
       </div>
 
       <!-- Caption -->

@@ -69,11 +69,12 @@ def _run_migrations(app):
 
     # (테이블명, 컬럼명, 컬럼 타입)
     columns_to_add = [
-        ('users',   'birthday',       'DATE'),
-        ('users',   'favorite_food',  'VARCHAR(100)'),
-        ('users',   'bio',            'TEXT'),
-        ('users',   'mbti',           'VARCHAR(4)'),
-        ('couples', 'pet_name',       'VARCHAR(50)'),
+        ('users',    'birthday',      'DATE'),
+        ('users',    'favorite_food', 'VARCHAR(100)'),
+        ('users',    'bio',           'TEXT'),
+        ('users',    'mbti',          'VARCHAR(4)'),
+        ('couples',  'pet_name',      'VARCHAR(50)'),
+        ('memories', 'media_type',    "VARCHAR(10) DEFAULT 'image' NOT NULL"),
     ]
 
     db_url = str(app.config.get('SQLALCHEMY_DATABASE_URI', ''))

@@ -4,6 +4,7 @@ Reusable form/input validators.
 import re
 
 ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+ALLOWED_VIDEO_EXTENSIONS = {'mp4', 'mov', 'avi', 'webm', 'mkv', 'm4v'}
 EMAIL_REGEX = re.compile(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
 
 
@@ -15,6 +16,13 @@ def is_allowed_image(filename: str) -> bool:
     return (
         '.' in filename
         and filename.rsplit('.', 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
+    )
+
+
+def is_allowed_video(filename: str) -> bool:
+    return (
+        '.' in filename
+        and filename.rsplit('.', 1)[1].lower() in ALLOWED_VIDEO_EXTENSIONS
     )
 
 
