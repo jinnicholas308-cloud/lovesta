@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% block title %}사이트맵{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+
+  <!-- 헤더 -->
+  <div class="mb-8 slide-up">
+    <h1 class="text-2xl font-black gradient-text mb-1">Lovesta 사이트맵</h1>
+    <p class="text-sm text-gray-400">앱의 전체 구조와 페이지 연결을 한눈에 확인하세요</p>
+  </div>
+
+  <div class="space-y-6">
+
+    <!-- 공개 페이지 -->
+    <div class="bg-white rounded-2xl shadow-sm border border-rose-50 p-5 slide-up" style="animation-delay:.05s">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-lg">🌐</span>
+        <h2 class="font-bold text-gray-700">공개 페이지</h2>
+        <span class="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full font-medium ml-auto">로그인 불필요</span>
+      </div>
+      <div class="space-y-2 sitemap-line">
+        <div class="flex items-start gap-3 py-1">
+          <a href="{{ url_for('auth.login') }}" class="sitemap-node">/auth/login</a>
+          <p class="text-sm text-gray-500 self-center">🔐 이메일 / Google 로그인</p>
+        </div>
+        <div class="flex items-start gap-3 py-1">
+          <a href="{{ url_for('auth.register') }}" class="sitemap-node">/auth/register</a>
+          <p class="text-sm text-gray-500 self-center">📝 회원가입</p>
+        </div>
+        <div class="flex items-start gap-3 py-1">
+          <a href="{{ url_for('auth.forgot') }}" class="sitemap-node">/auth/forgot</a>
+          <p class="text-sm text-gray-500 self-center">🔑 아이디 / 비밀번호 찾기</p>
+        </div>
+        <div class="flex items-start gap-3 py-1">
+          <span class="sitemap-node">/oauth/google</span>
+          <p class="text-sm text-gray-500 self-center">🟡 Google OAuth 콜백</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 피드 & 추억 -->
+    <div class="bg-white rounded-2xl shadow-sm border border-rose-50 p-5 slide-up" style="animation-delay:.1s">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-lg">📸</span>
+        <h2 class="font-bold text-gray-700">피드 & 추억</h2>
+        <span class="text-xs bg-rose-100 text-rose-500 px-2 py-0.5 rounded-full font-medium ml-auto">로그인 필요</span>
+      </div>
+      <div class="space-y-2 sitemap-line">
+        <div class="flex items-start gap-3 py-1">
+          <a href="{{ url_for('memories.feed') }}" class="sitemap-node">/feed</a>
+          <p class="text-sm text-gray-500 self-center">🏠 메인 피드 — 커플 추억 그리드</p>
+        </div>
+        <div class="flex items-start gap-3 py-1">
+          <a href="{{ url_for('memories.upload') }}" class="sitemap-node">/memories/upload</a>
+          <p class="text-sm text-gray-500 self-center">📷 추억 업로드 (사진, 캡션, 장소, 날짜)</p>
+        </div>
+        <div class="flex items-start gap-3 py-1">
+          <span class="sitemap-node">/memories/&lt;id&gt;</span>
+          <p class="text-sm text-gray-500 self-center">🖼️ 추억 상세 — 좋아요 · 댓글</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 커플 -->
+    <div class="bg-white rounded-2xl shadow-sm border border-rose-50 p-5 slide-up" style="animation-delay:.15s">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-lg">💑</span>
+        <h2 class="font-bold text-gray-700">커플</h2>
+        <span class="text-xs bg-rose-100 text-rose-500 px-2 py-0.5 rounded-full font-medium ml-auto">로그인 필요</span>
+      </div>
+      <div class="space-y-2 sitemap-line">
+        <div class="flex items-start gap-3 py-1">
+          <a href="{{ url_for('couple.setup') }}" class="sitemap-node">/couple/setup</a>
+          <p class="text-sm text-gray-500 self-center">💘 커플 생성 or 초대코드로 참여</p>
+        </div>
+        <div class="flex items-start gap-3 py-1">
+          <a href="{{ url_for('couple.info') }}" class="sitemap-node">/couple/info</a>
+          <p class="text-sm text-gray-500 self-center">💕 D+카운터 · 멤버 · 초대코드 · 펫</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 프로필 -->
+    <div class="bg-white rounded-2xl shadow-sm border border-rose-50 p-5 slide-up" style="animation-delay:.2s">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-lg">👤</span>
+        <h2 class="font-bold text-gray-700">프로필</h2>
+        <span class="text-xs bg-rose-100 text-rose-500 px-2 py-0.5 rounded-full font-medium ml-auto">로그인 필요</span>
+      </div>
+      <div class="space-y-2 sitemap-line">
+        <div class="flex items-start gap-3 py-1">
+          <a href="{{ url_for('profile.me') }}" class="sitemap-node">/profile</a>
+          <p class="text-sm text-gray-500 self-center">✏️ 생일 · 음식 · MBTI · 소개 · 펫 이름 · 로그아웃</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 관리자 -->
+    {% if current_user.is_authenticated and current_user.is_admin %}
+    <div class="bg-white rounded-2xl shadow-sm border border-amber-50 p-5 slide-up" style="animation-delay:.25s">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-lg">🛠️</span>
+        <h2 class="font-bold text-gray-700">관리자 (Admin)</h2>
+        <span class="text-xs bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full font-medium ml-auto">관리자 전용</span>
+      </div>
+      <div class="space-y-2 sitemap-line">
+        <div class="flex items-start gap-3 py-1">
+          <a href="{{ url_for('admin.dashboard') }}" class="sitemap-node">/admin</a>
+          <p class="text-sm text-gray-500 self-center">📊 통계 대시보드</p>
+        </div>
+        <div class="flex items-start gap-3 py-1">
+          <span class="sitemap-node">/admin/users</span>
+          <p class="text-sm text-gray-500 self-center">👥 사용자 관리</p>
+        </div>
+        <div class="flex items-start gap-3 py-1">
+          <span class="sitemap-node">/admin/memories</span>
+          <p class="text-sm text-gray-500 self-center">🖼️ 추억 관리</p>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- 기술 엔드포인트 -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 slide-up" style="animation-delay:.3s">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-lg">⚙️</span>
+        <h2 class="font-bold text-gray-600">시스템</h2>
+      </div>
+      <div class="space-y-2 sitemap-line">
+        <div class="flex items-start gap-3 py-1">
+          <span class="sitemap-node">/health</span>
+          <p class="text-sm text-gray-500 self-center">Railway 헬스체크</p>
+        </div>
+        <div class="flex items-start gap-3 py-1">
+          <a href="/sitemap.xml" class="sitemap-node">/sitemap.xml</a>
+          <p class="text-sm text-gray-500 self-center">SEO 사이트맵 (검색엔진용)</p>
+        </div>
+        <div class="flex items-start gap-3 py-1">
+          <a href="{{ url_for('sitemap_visual') }}" class="sitemap-node">/sitemap</a>
+          <p class="text-sm text-gray-500 self-center">현재 페이지</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 범례 -->
+  <div class="mt-8 flex flex-wrap gap-3 text-xs text-gray-400 slide-up" style="animation-delay:.35s">
+    <span class="flex items-center gap-1.5">
+      <span class="w-3 h-3 rounded-full bg-green-200 inline-block"></span> 공개
+    </span>
+    <span class="flex items-center gap-1.5">
+      <span class="w-3 h-3 rounded-full bg-rose-200 inline-block"></span> 로그인 필요
+    </span>
+    <span class="flex items-center gap-1.5">
+      <span class="w-3 h-3 rounded-full bg-amber-200 inline-block"></span> 관리자 전용
+    </span>
+  </div>
+
+</div>
+{% endblock %}

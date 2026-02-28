@@ -2,73 +2,109 @@
 {% block title %}우리 커플{% endblock %}
 
 {% block content %}
-<div class="max-w-xl mx-auto space-y-6">
-  <div class="bg-white rounded-2xl shadow-sm border border-rose-100 p-6 text-center">
-    <div class="text-4xl mb-3">💕</div>
-    <h1 class="text-xl font-bold text-gray-800">
-      {{ couple.couple_name or '우리 커플' }}
-    </h1>
+<div class="max-w-xl mx-auto space-y-5">
 
-    {% if days_together is not none %}
-    <p class="text-rose-500 font-semibold text-lg mt-2">
-      <span data-ko="함께한 지" data-en="Together for">함께한 지</span>
-      <span class="text-2xl">{{ days_together }}</span>
-      <span data-ko="일" data-en="days">일</span>
-    </p>
-    <p class="text-gray-400 text-sm">
-      {{ couple.anniversary.strftime('%Y년 %m월 %d일') }}
-      <span data-ko="부터" data-en="since">부터</span>
-    </p>
-    {% endif %}
-
-    <div class="mt-4 bg-rose-50 rounded-xl p-4">
-      <p class="text-xs text-gray-500 mb-1"
-         data-ko="커플 초대 코드" data-en="Couple Invite Code">커플 초대 코드</p>
-      <p class="font-mono text-rose-600 font-bold text-lg tracking-widest" id="invite-code">
-        {{ couple.invite_code }}
+  <!-- ── 러브 카운터 히어로 ── -->
+  <div class="love-hero rounded-3xl p-8 text-white shadow-2xl slide-up">
+    <div class="relative z-10 text-center">
+      <p class="text-white/70 text-sm font-medium tracking-widest uppercase mb-1">
+        {{ couple.couple_name or 'Lovesta 💕' }}
       </p>
-      <button onclick="copyCode()"
-              class="mt-2 text-xs text-gray-500 hover:text-rose-500 transition underline"
-              data-ko="복사하기" data-en="Copy">
-        복사하기
-      </button>
+
+      {% if days_together is not none %}
+      <div class="my-4">
+        <div class="flex items-end justify-center gap-2">
+          <span class="text-7xl font-black tracking-tighter love-pulse tabular-nums">{{ days_together }}</span>
+          <span class="text-2xl font-semibold pb-2 opacity-90" data-i18n="couple.day_unit">일</span>
+        </div>
+        <p class="text-white/75 text-sm mt-2">
+          <span data-i18n="couple.together_for">함께한 지</span> ♥
+        </p>
+        <p class="text-white/55 text-xs mt-1.5">
+          {% if couple.anniversary %}
+            {{ couple.anniversary.strftime('%Y년 %m월 %d일') }}
+          {% else %}
+            {{ couple.created_at.strftime('%Y년 %m월 %d일') }}
+          {% endif %}
+          <span data-i18n="couple.since">부터</span>
+        </p>
+      </div>
+      {% else %}
+      <div class="my-6">
+        <p class="text-5xl heartbeat select-none">💕</p>
+        <p class="text-white/80 text-sm mt-3">기념일을 설정해보세요</p>
+      </div>
+      {% endif %}
     </div>
   </div>
 
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-    <h2 class="font-semibold text-gray-700 mb-4"
-        data-ko="멤버" data-en="Members">멤버</h2>
-    <div class="space-y-3">
+  <!-- ── 멤버 카드 ── -->
+  <div class="bg-white rounded-2xl shadow-sm border border-rose-50 p-6 slide-up" style="animation-delay:.08s">
+    <h2 class="font-bold text-gray-500 text-xs uppercase tracking-widest mb-5"
+        data-i18n="couple.members">멤버</h2>
+    <div class="flex items-center justify-around gap-4">
       {% for member in members %}
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center text-rose-500 font-semibold text-lg">
-          {{ member.username[0].upper() }}
-        </div>
-        <div>
-          <p class="font-medium text-gray-800">{{ member.username }}</p>
-          <p class="text-xs text-gray-400">{{ member.email }}</p>
-        </div>
-        {% if member.id == current_user.id %}
-        <span class="ml-auto text-xs bg-rose-100 text-rose-600 px-2 py-0.5 rounded-full"
-              data-ko="나" data-en="me">나</span>
+      <div class="flex flex-col items-center gap-2 flex-1">
+        {% if member.profile_image %}
+          <img src="{{ member.profile_image }}"
+               class="w-[72px] h-[72px] rounded-full object-cover ring-4 ring-rose-100 avatar-glow" />
+        {% else %}
+          <div class="w-[72px] h-[72px] rounded-full bg-gradient-to-br from-rose-400 to-pink-500
+                      flex items-center justify-center text-white text-2xl font-black ring-4 ring-rose-50 avatar-glow">
+            {{ member.username[0].upper() }}
+          </div>
         {% endif %}
+        <div class="text-center">
+          <p class="font-semibold text-gray-800 text-sm">{{ member.username }}</p>
+          {% if member.mbti %}
+            <span class="text-xs bg-purple-50 text-purple-500 px-2 py-0.5 rounded-full font-medium mt-0.5 inline-block">{{ member.mbti }}</span>
+          {% endif %}
+          {% if member.id == current_user.id %}
+            <p class="text-xs text-rose-400 mt-1 font-medium" data-i18n="couple.me">나</p>
+          {% endif %}
+        </div>
       </div>
+
+      {% if not loop.last %}
+      <div class="flex-shrink-0">
+        <span class="text-3xl heartbeat select-none">💕</span>
+      </div>
+      {% endif %}
       {% endfor %}
     </div>
   </div>
 
+  <!-- ── 커플 초대 코드 ── -->
+  <div class="bg-white rounded-2xl shadow-sm border border-rose-50 p-5 slide-up" style="animation-delay:.14s">
+    <p class="text-xs text-gray-400 text-center uppercase tracking-widest font-semibold mb-3"
+       data-i18n="couple.invite_code">커플 초대 코드</p>
+    <div class="bg-gradient-to-r from-rose-50 to-pink-50 rounded-xl py-4 px-6 text-center border border-rose-100">
+      <p class="font-mono text-rose-500 font-black text-2xl tracking-[0.2em]" id="invite-code">
+        {{ couple.invite_code }}
+      </p>
+    </div>
+    <button onclick="copyCode()"
+            class="mt-3 w-full py-2.5 text-sm text-rose-500 hover:bg-rose-50 border border-rose-200 rounded-xl transition-colors font-semibold active:scale-95"
+            data-i18n="couple.copy">복사하기</button>
+  </div>
+
   <a href="{{ url_for('memories.feed') }}"
-     class="block text-center text-sm text-gray-500 hover:text-rose-500 transition"
-     data-ko="← 피드로 돌아가기" data-en="← Back to Feed">
-    ← 피드로 돌아가기
-  </a>
+     class="block text-center text-sm text-gray-400 hover:text-rose-500 transition-colors py-2"
+     data-i18n="couple.back">← 피드로 돌아가기</a>
+
 </div>
 
 <script>
 function copyCode() {
-  const code = document.getElementById('invite-code').textContent.trim();
-  navigator.clipboard.writeText(code).then(() => {
-    alert('코드가 복사되었습니다: ' + code);
+  var code = document.getElementById('invite-code').textContent.trim();
+  navigator.clipboard.writeText(code).then(function () {
+    var t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = '✓ ' + code;
+    document.body.appendChild(t);
+    setTimeout(function () { t.remove(); }, 2200);
+  }).catch(function () {
+    prompt('코드를 복사하세요:', code);
   });
 }
 </script>
