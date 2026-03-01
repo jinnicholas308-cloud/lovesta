@@ -157,34 +157,55 @@ def interaction_bonus():
     """인터랙션 완수 보너스: 리롤권 2장 (중복 방지 — 1일 1회)."""
     from app.models.attendance import Attendance
     from datetime import datetime
+    from sqlalchemy import text
+    import logging
 
     if not current_user.couple_id:
         return jsonify({'success': False, 'message': '커플 없음'}), 403
 
     couple = Couple.query.get(current_user.couple_id)
+    if not couple:
+        return jsonify({'success': False, 'message': '커플 정보 없음'}), 403
+
     today = datetime.utcnow().date()
 
     # 출석 체크를 한 날에만 인터랙션 보너스 가능
     if not Attendance.has_checked_today(current_user.id):
         return jsonify({'success': False, 'message': '먼저 오늘 출석 체크를 해주세요!'}), 400
 
-    # 1일 1회 중복 방지 (세션 키 대신 DB 기반)
-    from sqlalchemy import text
-    already = db.session.execute(
-        text("SELECT 1 FROM interaction_logs WHERE user_id = :uid AND date = :d"),
-        {'uid': current_user.id, 'd': today}
-    ).fetchone()
+    # 1일 1회 중복 방지 (DB 기반)
+    try:
+        already = db.session.execute(
+            text("SELECT 1 FROM interaction_logs WHERE user_id = :uid AND date = :d"),
+            {'uid': current_user.id, 'd': today}
+        ).fetchone()
+    except Exception:
+        db.session.rollback()
+        already = None
 
     if already:
         return jsonify({'success': False, 'message': '오늘 이미 인터랙션 보너스를 받았어요!'}), 400
 
     # 보너스 지급 (커플 통합 티켓)
-    couple.reroll_tickets = (couple.reroll_tickets or 0) + 2
-    db.session.execute(
-        text("INSERT INTO interaction_logs (user_id, date) VALUES (:uid, :d)"),
-        {'uid': current_user.id, 'd': today}
-    )
-    db.session.commit()
+    try:
+        couple.reroll_tickets = (couple.reroll_tickets or 0) + 2
+        db.session.execute(
+            text("INSERT INTO interaction_logs (user_id, date) VALUES (:uid, :d)"),
+            {'uid': current_user.id, 'd': today}
+        )
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f'[InteractionBonus] INSERT 실패: {e}')
+        # INSERT 실패 시 (id 시퀀스 문제 등) — 티켓만 직접 지급
+        try:
+            couple.reroll_tickets = (couple.reroll_tickets or 0)  # 롤백됐으므로 다시 읽기
+            couple = Couple.query.get(current_user.couple_id)
+            couple.reroll_tickets = (couple.reroll_tickets or 0) + 2
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            return jsonify({'success': False, 'message': '보상 지급 중 오류가 발생했어요. 잠시 후 다시 시도해주세요.'}), 500
 
     return jsonify({
         'success': True,

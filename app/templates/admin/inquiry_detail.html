@@ -43,7 +43,7 @@
   {% if inquiry.admin_reply %}
   <div class="bg-green-50 border border-green-200 rounded-2xl p-5 space-y-2">
     <div class="flex items-center gap-2">
-      <span class="text-green-600 font-semibold text-sm">✅ 관리자 답변</span>
+      <span class="text-green-600 font-semibold text-sm">관리자 답변</span>
       {% if inquiry.replied_at %}
       <span class="text-xs text-green-400">{{ inquiry.replied_at.strftime('%Y.%m.%d %H:%M') }}</span>
       {% endif %}
@@ -55,7 +55,7 @@
   <!-- 인원 증설 폼 (increase_limit 카테고리 + couple_id 존재 시) -->
   {% if inquiry.category == 'increase_limit' and inquiry.couple_id %}
   <div class="bg-pink-50 border border-pink-200 rounded-2xl p-5 space-y-3">
-    <h3 class="font-semibold text-pink-600 text-sm">🏠 인원 증설</h3>
+    <h3 class="font-semibold text-pink-600 text-sm">인원 증설</h3>
     <form method="POST" action="{{ url_for('admin.inquiry_detail', inquiry_id=inquiry.id) }}"
           class="flex items-center gap-3 flex-wrap">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
@@ -77,7 +77,7 @@
   <!-- 답변 폼 -->
   {% if inquiry.status != 'closed' %}
   <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-3">
-    <h3 class="font-semibold text-gray-700 text-sm">💬 답변 작성</h3>
+    <h3 class="font-semibold text-gray-700 text-sm">답변 작성</h3>
     <form method="POST" action="{{ url_for('admin.inquiry_detail', inquiry_id=inquiry.id) }}" class="space-y-3">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       <input type="hidden" name="action" value="reply" />
@@ -102,7 +102,7 @@
       <button type="submit"
               class="border border-gray-200 hover:border-gray-400 text-gray-500 hover:text-gray-700 text-sm font-medium px-4 py-2 rounded-xl transition"
               onclick="return confirm('문의를 종료 처리하시겠습니까?')">
-        🔒 문의 종료
+        문의 종료
       </button>
     </form>
   </div>

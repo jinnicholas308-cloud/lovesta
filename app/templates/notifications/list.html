@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}알림{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto space-y-4">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between slide-up">
+    <h1 class="text-xl font-bold gradient-text">알림</h1>
+    {% if notifications %}
+    <form method="POST" action="{{ url_for('notification.mark_all_read') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <button type="submit" class="text-xs text-gray-400 hover:text-rose-500 transition font-medium">
+        모두 읽음 처리
+      </button>
+    </form>
+    {% endif %}
+  </div>
+
+  {% if notifications %}
+  <div class="space-y-2">
+    {% for n in notifications %}
+    <a href="{{ url_for('notification.mark_read', nid=n.id) }}"
+       class="block bg-white rounded-2xl shadow-sm border p-4 transition-all hover:shadow-md slide-up
+              {% if not n.is_read %}border-rose-200 bg-rose-50/30{% else %}border-gray-50{% endif %}"
+       style="animation-delay: {{ loop.index0 * 0.03 }}s"
+       onclick="event.preventDefault(); document.getElementById('nf-{{ n.id }}').submit();">
+      <form id="nf-{{ n.id }}" method="POST" action="{{ url_for('notification.mark_read', nid=n.id) }}" class="hidden">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      </form>
+      <div class="flex items-start gap-3">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg shrink-0
+                    {% if not n.is_read %}bg-rose-100{% else %}bg-gray-100{% endif %}">
+          {{ n.icon }}
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-gray-800 {% if not n.is_read %}text-rose-700{% endif %}">
+            {{ n.title }}
+          </p>
+          {% if n.body %}
+          <p class="text-xs text-gray-500 mt-0.5 truncate">{{ n.body }}</p>
+          {% endif %}
+          <p class="text-xs text-gray-400 mt-1">{{ n.time_ago }}</p>
+        </div>
+        {% if not n.is_read %}
+        <span class="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0 mt-2"></span>
+        {% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-20 slide-up">
+    <div class="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-rose-100 to-pink-100
+                flex items-center justify-center mb-5 shadow-inner">
+      <span class="text-4xl"></span>
+    </div>
+    <p class="font-bold text-gray-600 text-lg">알림이 없어요</p>
+    <p class="text-sm text-gray-400 mt-1.5">새로운 소식이 오면 여기서 확인할 수 있어요!</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

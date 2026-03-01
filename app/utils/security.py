@@ -81,7 +81,7 @@ def apply_security_headers(response):
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     # 권한 정책
     response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
-    # Content Security Policy (Tailwind CDN + Google OAuth + Cloudinary + AdSense)
+    # Content Security Policy (Tailwind CDN + Google OAuth + Cloudinary + AdSense + PWA)
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
         "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com "
@@ -93,6 +93,8 @@ def apply_security_headers(response):
         "https://pagead2.googlesyndication.com https://*.google.com blob:; "
         "connect-src 'self' https://pagead2.googlesyndication.com https://*.google.com; "
         "frame-src https://accounts.google.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com; "
+        "worker-src 'self'; "
+        "manifest-src 'self'; "
         "object-src 'none'; "
         "base-uri 'self';"
     )

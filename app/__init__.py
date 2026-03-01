@@ -50,6 +50,7 @@ def create_app(env: str = None):
     from app.routes.pet_routes import pet_bp
     from app.routes.inquiry_routes import inquiry_bp
     from app.routes.attendance_routes import attendance_bp
+    from app.routes.notification_routes import notification_bp
 
     init_oauth(app)
 
@@ -63,6 +64,7 @@ def create_app(env: str = None):
     app.register_blueprint(pet_bp)
     app.register_blueprint(inquiry_bp)
     app.register_blueprint(attendance_bp)
+    app.register_blueprint(notification_bp)
 
     with app.app_context():
         try:
@@ -79,23 +81,58 @@ def create_app(env: str = None):
 def _ensure_extra_tables(app):
     """인터랙션 로그 등 추가 테이블 생성."""
     from sqlalchemy import text, inspect
+    db_url = str(app.config.get('SQLALCHEMY_DATABASE_URI', ''))
+    is_pg = db_url.startswith('postgresql')
     inspector = inspect(db.engine)
     existing = inspector.get_table_names()
+
     if 'interaction_logs' not in existing:
         try:
-            db.session.execute(text(
-                'CREATE TABLE interaction_logs ('
-                '  id INTEGER PRIMARY KEY,'
-                '  user_id INTEGER NOT NULL,'
-                '  date DATE NOT NULL,'
-                '  UNIQUE(user_id, date)'
-                ')'
-            ))
+            if is_pg:
+                db.session.execute(text(
+                    'CREATE TABLE interaction_logs ('
+                    '  id SERIAL PRIMARY KEY,'
+                    '  user_id INTEGER NOT NULL,'
+                    '  date DATE NOT NULL,'
+                    '  UNIQUE(user_id, date)'
+                    ')'
+                ))
+            else:
+                db.session.execute(text(
+                    'CREATE TABLE interaction_logs ('
+                    '  id INTEGER PRIMARY KEY AUTOINCREMENT,'
+                    '  user_id INTEGER NOT NULL,'
+                    '  date DATE NOT NULL,'
+                    '  UNIQUE(user_id, date)'
+                    ')'
+                ))
             db.session.commit()
             app.logger.info('[Migration] interaction_logs 테이블 생성 완료')
         except Exception as e:
             db.session.rollback()
             app.logger.warning(f'[Migration] interaction_logs 생성 실패: {e}')
+    elif is_pg:
+        # 기존 테이블이 SERIAL 없이 생성된 경우 재생성
+        try:
+            has_seq = db.session.execute(text(
+                "SELECT column_default FROM information_schema.columns "
+                "WHERE table_name='interaction_logs' AND column_name='id'"
+            )).scalar()
+            if not has_seq or 'nextval' not in str(has_seq):
+                db.session.execute(text('DROP TABLE interaction_logs'))
+                db.session.execute(text(
+                    'CREATE TABLE interaction_logs ('
+                    '  id SERIAL PRIMARY KEY,'
+                    '  user_id INTEGER NOT NULL,'
+                    '  date DATE NOT NULL,'
+                    '  UNIQUE(user_id, date)'
+                    ')'
+                ))
+                db.session.commit()
+                app.logger.info('[Migration] interaction_logs 테이블 SERIAL로 재생성')
+        except Exception as e:
+            db.session.rollback()
+            app.logger.warning(f'[Migration] interaction_logs 확인 실패: {e}')
 
 
 def _run_migrations(app):

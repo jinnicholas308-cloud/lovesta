@@ -1,0 +1,27 @@
+{
+  "name": "Lovesta — 커플 추억 공유",
+  "short_name": "Lovesta",
+  "description": "우리의 추억을 함께 기록해요 💕",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fff1f2",
+  "theme_color": "#f43f5e",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/static/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["social", "lifestyle"],
+  "lang": "ko",
+  "dir": "ltr"
+}

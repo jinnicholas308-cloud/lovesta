@@ -52,7 +52,7 @@ def new_inquiry():
 
         send_inquiry_notification(inquiry)
 
-        flash('문의가 접수되었습니다! 빠르게 답변 드릴게요 💕', 'success')
+        flash('문의가 접수되었습니다! 빠르게 답변 드릴게요.', 'success')
         return redirect(url_for('inquiry.list_inquiries'))
 
     return render_template('inquiry/new.html', categories=INQUIRY_CATEGORIES)

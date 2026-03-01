@@ -5,7 +5,7 @@
 <div class="min-h-[70vh] flex items-center justify-center">
   <div class="w-full max-w-lg space-y-6">
     <div class="text-center">
-      <div class="text-5xl mb-2">💑</div>
+      <div class="text-5xl mb-2">♥</div>
       <h1 class="text-2xl font-bold text-gray-800">커플 연결</h1>
       <p class="text-gray-500 text-sm mt-1">새 커플 공간을 만들거나 파트너의 코드로 참여하세요</p>
     </div>
@@ -13,7 +13,7 @@
     <div class="grid md:grid-cols-2 gap-4">
       <!-- Create -->
       <div class="bg-white rounded-2xl shadow-sm border border-rose-100 p-6">
-        <h2 class="font-semibold text-gray-800 mb-4">✨ 새로 만들기</h2>
+        <h2 class="font-semibold text-gray-800 mb-4">새로 만들기</h2>
         <form method="POST" class="space-y-3">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <input type="hidden" name="action" value="create" />
@@ -37,7 +37,7 @@
 
       <!-- Join -->
       <div class="bg-white rounded-2xl shadow-sm border border-pink-100 p-6">
-        <h2 class="font-semibold text-gray-800 mb-4">🔗 코드로 참여</h2>
+        <h2 class="font-semibold text-gray-800 mb-4">코드로 참여</h2>
         <form method="POST" class="space-y-3">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <input type="hidden" name="action" value="join" />

@@ -4,7 +4,7 @@
 {% block og_meta %}
 {% set pet = couple.pet_info %}
 <meta property="og:title" content="{{ couple.couple_name or 'Lovesta' }} — D+{{ days_together }}" />
-<meta property="og:description" content="우리 커플은 {{ pet.rarity_info.label if pet.rarity_info else '커먼' }} {{ pet.name }} {{ pet.emoji }}을(를) 키워요! D+{{ days_together }}일 💕" />
+<meta property="og:description" content="우리 커플은 {{ pet.rarity_info.label if pet.rarity_info else '커먼' }} {{ pet.name }} {{ pet.emoji }}을(를) 키워요! D+{{ days_together }}일" />
 {% endblock %}
 
 {% block content %}
@@ -14,7 +14,7 @@
   <div class="love-hero rounded-3xl p-8 text-white shadow-2xl slide-up">
     <div class="relative z-10 text-center">
       <p class="text-white/70 text-sm font-medium tracking-widest uppercase mb-1">
-        {{ couple.couple_name or 'Lovesta 💕' }}
+        {{ couple.couple_name or 'Lovesta' }}
       </p>
 
       {% if days_together is not none %}
@@ -24,7 +24,7 @@
           <span class="text-2xl font-semibold pb-2 opacity-90" data-i18n="couple.day_unit">일</span>
         </div>
         <p class="text-white/75 text-sm mt-2">
-          <span data-i18n="couple.together_for">함께한 지</span> ♥
+          <span data-i18n="couple.together_for">함께한 지</span>
         </p>
         <p class="text-white/55 text-xs mt-1.5">
           {% if couple.anniversary %}
@@ -37,7 +37,6 @@
       </div>
       {% else %}
       <div class="my-6">
-        <p class="text-5xl heartbeat select-none">💕</p>
         <p class="text-white/80 text-sm mt-3">기념일을 설정해보세요</p>
       </div>
       {% endif %}
@@ -72,9 +71,6 @@
       </div>
 
       {% if not loop.last %}
-      <div class="flex-shrink-0">
-        <span class="text-3xl heartbeat select-none">💕</span>
-      </div>
       {% endif %}
       {% endfor %}
     </div>
@@ -84,7 +80,7 @@
   {% set pet = couple.pet_info %}
   <div class="bg-white rounded-2xl shadow-sm border border-rose-50 p-6 slide-up" style="animation-delay:.12s">
     <h2 class="font-bold text-gray-500 text-xs uppercase tracking-widest mb-4"
-        data-i18n="profile.pet">우리 펫 🐾</h2>
+        data-i18n="profile.pet">우리 펫</h2>
 
     <div class="flex items-center gap-5">
       <!-- 펫 이모지 (크게) -->
@@ -111,19 +107,19 @@
         <!-- 성장 프로그레스 바 -->
         {% if pet.stage == '알' %}
           {% set pct = (pet.days / 7 * 100) | int %}
-          <p class="text-xs text-rose-400 mt-1.5 font-medium" data-i18n="pet.hatching">곧 깨어나요 🥚</p>
+          <p class="text-xs text-rose-400 mt-1.5 font-medium" data-i18n="pet.hatching">곧 깨어나요</p>
         {% elif pet.stage == '아기' %}
           {% set pct = ((pet.days - 7) / 23 * 100) | int %}
-          <p class="text-xs text-pink-400 mt-1.5 font-medium">쑥쑥 자라는 중 🍼</p>
+          <p class="text-xs text-pink-400 mt-1.5 font-medium">쑥쑥 자라는 중</p>
         {% elif pet.stage == '아이' %}
           {% set pct = ((pet.days - 30) / 70 * 100) | int %}
-          <p class="text-xs text-amber-400 mt-1.5 font-medium">활발하게 놀고 있어요 🎈</p>
+          <p class="text-xs text-amber-400 mt-1.5 font-medium">활발하게 놀고 있어요</p>
         {% elif pet.stage == '청소년' %}
           {% set pct = ((pet.days - 100) / 265 * 100) | int %}
-          <p class="text-xs text-purple-400 mt-1.5 font-medium">멋지게 성장 중 ✨</p>
+          <p class="text-xs text-purple-400 mt-1.5 font-medium">멋지게 성장 중</p>
         {% else %}
           {% set pct = 100 %}
-          <p class="text-xs text-rose-400 mt-1.5 font-medium" data-i18n="pet.grown">다 컸어요! 🎉</p>
+          <p class="text-xs text-rose-400 mt-1.5 font-medium" data-i18n="pet.grown">다 컸어요!</p>
         {% endif %}
 
         <!-- 성장 게이지 -->
@@ -137,28 +133,28 @@
     <!-- 펫 이름 표시 (커스텀 이름이 있을 때) -->
     {% if couple.pet_name %}
     <p class="mt-4 text-xs text-center text-gray-400"
-       data-i18n="pet.caption">우리의 소중한 펫이에요 💕</p>
+       data-i18n="pet.caption">우리의 소중한 펫이에요</p>
     {% endif %}
   </div>
 
   <!-- ── 커플 설정 편집 ── -->
   <div class="bg-white rounded-2xl shadow-sm border border-rose-50 p-5 slide-up" style="animation-delay:.13s">
-    <h2 class="font-bold text-gray-500 text-xs uppercase tracking-widest mb-4">커플 설정 ✏️</h2>
+    <h2 class="font-bold text-gray-500 text-xs uppercase tracking-widest mb-4">커플 설정</h2>
     <form method="POST" class="space-y-3">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       <input type="hidden" name="action" value="update_anniversary" />
 
       <div>
-        <label class="block text-xs text-gray-500 mb-1 font-medium">💑 커플 이름</label>
+        <label class="block text-xs text-gray-500 mb-1 font-medium">커플 이름</label>
         <input type="text" name="couple_name"
                value="{{ couple.couple_name or '' }}" maxlength="50"
-               placeholder="예: 진이와 미이 ♥"
+               placeholder="예: 진이와 미이"
                class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm
                       focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-400 transition" />
       </div>
 
       <div>
-        <label class="block text-xs text-gray-500 mb-1 font-medium">📅 시작일 (기념일)</label>
+        <label class="block text-xs text-gray-500 mb-1 font-medium">시작일 (기념일)</label>
         <input type="date" name="anniversary"
                value="{{ couple.anniversary.strftime('%Y-%m-%d') if couple.anniversary else couple.created_at.strftime('%Y-%m-%d') }}"
                class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm
@@ -169,7 +165,7 @@
       <button type="submit"
               class="w-full gradient-rose text-white font-bold py-2.5 rounded-xl
                      hover:opacity-90 active:scale-95 transition-all shadow-sm text-sm">
-        저장하기 💾
+        저장하기
       </button>
     </form>
   </div>

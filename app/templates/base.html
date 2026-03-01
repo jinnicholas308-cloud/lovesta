@@ -9,9 +9,17 @@
   <meta property="og:site_name" content="Lovesta" />
   <meta property="og:type" content="website" />
   {% block og_meta %}
-  <meta property="og:title" content="Lovesta — 우리의 추억을 함께 기록해요 💕" />
+  <meta property="og:title" content="Lovesta — 우리의 추억을 함께 기록해요" />
   <meta property="og:description" content="커플 추억 공유 앱. 사진·동영상·펫 키우기까지!" />
   {% endblock %}
+
+  <!-- PWA -->
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}" />
+  <meta name="theme-color" content="#f43f5e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Lovesta" />
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}" />
 
   <!-- Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2505795324736912" crossorigin="anonymous"></script>
@@ -44,7 +52,7 @@
 
       <a href="{{ url_for('memories.feed') }}"
          class="text-2xl font-black tracking-tight gradient-text select-none">
-        ♥ Lovesta
+        Lovesta
       </a>
 
       {% if current_user.is_authenticated %}
@@ -57,21 +65,31 @@
 
         <a href="{{ url_for('couple.info') }}"
            class="text-gray-500 hover:text-rose-500 text-sm transition-colors px-2.5 py-1.5 rounded-lg hover:bg-rose-50"
-           data-i18n="nav.couple">💑 커플</a>
+           data-i18n="nav.couple">커플</a>
 
         <a href="{{ url_for('pet.collection') }}"
-           class="text-gray-500 hover:text-rose-500 text-sm transition-colors px-2.5 py-1.5 rounded-lg hover:bg-rose-50">🐾 펫</a>
+           class="text-gray-500 hover:text-rose-500 text-sm transition-colors px-2.5 py-1.5 rounded-lg hover:bg-rose-50">펫</a>
 
         <a href="{{ url_for('inquiry.list_inquiries') }}"
-           class="text-gray-500 hover:text-rose-500 text-sm transition-colors px-2.5 py-1.5 rounded-lg hover:bg-rose-50">📨 문의</a>
+           class="text-gray-500 hover:text-rose-500 text-sm transition-colors px-2.5 py-1.5 rounded-lg hover:bg-rose-50">문의</a>
 
         {% if current_user.is_admin %}
         <a href="{{ url_for('admin.dashboard') }}"
            class="text-gray-500 hover:text-rose-500 text-sm transition-colors px-2.5 py-1.5 rounded-lg hover:bg-rose-50"
-           data-i18n="nav.admin">🛠️ 관리</a>
+           data-i18n="nav.admin">관리</a>
         {% endif %}
 
         <div class="w-px h-5 bg-gray-200 mx-1"></div>
+
+        <!-- 알림 벨 -->
+        <a href="{{ url_for('notification.list_notifications') }}" id="notif-bell-desktop"
+           class="relative text-gray-500 hover:text-rose-500 text-sm transition-colors px-2 py-1 rounded-lg hover:bg-rose-50">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+          </svg>
+          <span id="notif-badge-desktop" class="hidden absolute -top-1 -right-0.5 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center font-bold"></span>
+        </a>
 
         <a href="{{ url_for('profile.me') }}"
            class="flex items-center gap-1.5 text-sm font-semibold text-gray-600 hover:text-rose-500 transition-colors px-2 py-1 rounded-lg hover:bg-rose-50">
@@ -99,8 +117,16 @@
       <!-- 모바일 헤더 우측 -->
       <div class="flex md:hidden items-center gap-2">
         {% if current_user.is_admin %}
-        <a href="{{ url_for('admin.dashboard') }}" class="text-base text-gray-400 hover:text-rose-500 transition-colors">🛠️</a>
+        <a href="{{ url_for('admin.dashboard') }}" class="text-base text-gray-400 hover:text-rose-500 transition-colors text-sm">관리</a>
         {% endif %}
+        <a href="{{ url_for('notification.list_notifications') }}" id="notif-bell-mobile"
+           class="relative text-base text-gray-400 hover:text-rose-500 transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+          </svg>
+          <span id="notif-badge-mobile" class="hidden absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center font-bold"></span>
+        </a>
         <a href="{{ url_for('profile.me') }}"
            class="text-sm font-semibold text-gray-600 hover:text-rose-500 transition-colors">
           {{ current_user.username }}
@@ -123,7 +149,7 @@
         {% elif category == 'success'%}bg-green-50  text-green-700 border border-green-200
         {% elif category == 'warning'%}bg-yellow-50 text-yellow-700 border border-yellow-200
         {% else                      %}bg-blue-50   text-blue-700  border border-blue-200{% endif %}">
-        <span>{% if category=='error' %}⚠️{% elif category=='success' %}✅{% elif category=='warning' %}⚡{% else %}ℹ️{% endif %}</span>
+        <span class="{% if category=='error' %}text-red-500{% elif category=='success' %}text-green-500{% elif category=='warning' %}text-yellow-500{% else %}text-blue-500{% endif %} font-bold">&bull;</span>
         <span>{{ message }}</span>
       </div>
       {% endfor %}
@@ -172,7 +198,10 @@
 
       <a href="{{ url_for('pet.collection') }}"
          class="flex flex-col items-center gap-0.5 text-gray-400 hover:text-rose-500 active:text-rose-600 transition-colors px-2 py-1.5">
-        <span class="text-xl leading-6">🐾</span>
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 21c-1.5 0-3-1.5-3-3s1.5-3 3-3 3 1.5 3 3-1.5 3-3 3zM5.5 10a2 2 0 100-4 2 2 0 000 4zM18.5 10a2 2 0 100-4 2 2 0 000 4zM8 14a2 2 0 100-4 2 2 0 000 4zM16 14a2 2 0 100-4 2 2 0 000 4z"/>
+        </svg>
         <span class="text-[10px] font-medium">펫</span>
       </a>
 
@@ -210,12 +239,12 @@
             <span class="text-gray-400">· {{ pet.stage }}</span>
           </p>
           <p class="text-xs text-gray-400 mt-0.5">
-            {{ pet.days }}<span data-i18n="pet.days">일째 🌸</span>
+            {{ pet.days }}<span data-i18n="pet.days">일째</span>
           </p>
         </div>
       </div>
       <p class="mt-3 text-xs text-center text-gray-300 border-t border-gray-50 pt-2"
-         data-i18n="pet.caption">우리의 소중한 펫이에요 💕</p>
+         data-i18n="pet.caption">우리의 소중한 펫이에요</p>
     </div>
     <button onclick="petToggle()" id="pet-toggle-btn"
             class="w-12 h-12 bg-white rounded-full shadow-lg border border-rose-100 flex items-center justify-center text-2xl select-none">
@@ -231,5 +260,44 @@
   <!-- i18n.js 로드 (페이지 맨 아래 → DOM 준비 후 즉시 실행) -->
   <script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+  <!-- Service Worker 등록 + 알림 뱃지 -->
+  <script>
+  // SW 등록
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js', { scope: '/' })
+      .then(function(r) { console.log('[SW] registered', r.scope); })
+      .catch(function(e) { console.log('[SW] failed', e); });
+  }
+
+  // 알림 뱃지 업데이트 (30초마다)
+  {% if current_user.is_authenticated %}
+  (function notifPoll() {
+    function update() {
+      fetch('/notifications/unread-count')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          var badges = [
+            document.getElementById('notif-badge-desktop'),
+            document.getElementById('notif-badge-mobile')
+          ];
+          badges.forEach(function(b) {
+            if (!b) return;
+            if (d.count > 0) {
+              b.textContent = d.count > 9 ? '9+' : d.count;
+              b.classList.remove('hidden');
+              b.classList.add('flex');
+            } else {
+              b.classList.add('hidden');
+              b.classList.remove('flex');
+            }
+          });
+        }).catch(function(){});
+    }
+    update();
+    setInterval(update, 30000);
+  })();
+  {% endif %}
+  </script>
 </body>
 </html>

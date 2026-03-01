@@ -26,6 +26,17 @@ def add_comment(memory_id):
 
     comment = Comment(content=content, user_id=current_user.id, memory_id=memory_id)
     db.session.add(comment)
+
+    # 댓글 알림 (작성자에게)
+    if memory.user_id != current_user.id:
+        from app.models.notification import Notification
+        Notification.send(
+            memory.user_id, 'comment',
+            f'{current_user.username}님이 댓글을 남겼어요.',
+            body=content[:80],
+            url=url_for('memories.detail', memory_id=memory_id)
+        )
+
     db.session.commit()
     return redirect(url_for('memories.detail', memory_id=memory_id))
 

@@ -5,7 +5,7 @@
 <div class="space-y-4">
   <div class="flex items-center gap-4 flex-wrap">
     <a href="{{ url_for('admin.dashboard') }}" class="text-sm text-gray-400 hover:text-rose-500">← 대시보드</a>
-    <h1 class="text-xl font-bold text-gray-800">💑 커플 관리</h1>
+    <h1 class="text-xl font-bold text-gray-800">커플 관리</h1>
     <span class="text-sm text-gray-400 ml-auto">총 {{ couples.total }}팀</span>
   </div>
 
@@ -26,7 +26,7 @@
       <!-- 헤더 -->
       <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-3">
-          <span class="text-2xl">💑</span>
+          <span class="text-2xl"></span>
           <div>
             <p class="font-bold text-gray-800">{{ couple.couple_name or '(이름 없음)' }}</p>
             <p class="text-xs text-gray-400">코드: <span class="font-mono text-rose-500 font-bold">{{ couple.invite_code }}</span></p>
@@ -45,7 +45,7 @@
             멤버 ({{ couple.members.count() }}/{{ couple.max_members or 2 }})
           </p>
           <div class="flex items-center gap-1.5">
-            <span class="text-xs text-amber-500 font-bold">🎟️ 커플 리롤권: {{ couple.reroll_tickets or 0 }}장</span>
+            <span class="text-xs text-amber-500 font-bold">커플 리롤권: {{ couple.reroll_tickets or 0 }}장</span>
           </div>
         </div>
         <div class="space-y-1.5">
@@ -120,15 +120,15 @@
           </select>
           <select name="breed" class="text-xs border border-purple-200 rounded-lg px-1.5 py-1 bg-white focus:outline-none focus:border-purple-400">
             <option value="">랜덤</option>
-            <option value="cat">🐱 고양이</option>
-            <option value="dog">🐶 강아지</option>
-            <option value="bunny">🐰 토끼</option>
-            <option value="hamster">🐹 햄스터</option>
-            <option value="panda">🐼 판다</option>
-            <option value="fox">🦊 여우</option>
-            <option value="unicorn">🦄 유니콘</option>
-            <option value="dragon">🐉 드래곤</option>
-            <option value="phoenix">🔥 불사조</option>
+            <option value="cat">고양이</option>
+            <option value="dog">강아지</option>
+            <option value="bunny">토끼</option>
+            <option value="hamster">햄스터</option>
+            <option value="panda">판다</option>
+            <option value="fox">여우</option>
+            <option value="unicorn">유니콘</option>
+            <option value="dragon">드래곤</option>
+            <option value="phoenix">불사조</option>
           </select>
           <button type="submit" class="text-xs bg-purple-500 text-white px-3 py-1 rounded-lg hover:bg-purple-600 transition font-medium">
             지급

@@ -104,6 +104,16 @@ def upload():
         db.session.add(memory)
         db.session.commit()
 
+        # 파트너에게 알림 전송
+        from app.models.notification import Notification
+        Notification.send_to_couple_partner(
+            current_user, 'memory_upload',
+            f'{current_user.username}님이 새 추억을 올렸어요!',
+            body=caption[:100] if caption else None,
+            url=url_for('memories.detail', memory_id=memory.id)
+        )
+        db.session.commit()
+
         flash('추억이 업로드되었습니다!', 'success')
         return redirect(url_for('memories.detail', memory_id=memory.id))
 
@@ -158,6 +168,14 @@ def toggle_like(memory_id):
     else:
         db.session.add(Like(user_id=current_user.id, memory_id=memory_id))
         liked = True
+        # 좋아요 알림 (작성자에게)
+        if memory.user_id != current_user.id:
+            from app.models.notification import Notification
+            Notification.send(
+                memory.user_id, 'like',
+                f'{current_user.username}님이 추억에 좋아요를 눌렀어요!',
+                url=url_for('memories.detail', memory_id=memory_id)
+            )
 
     db.session.commit()
     return jsonify({'liked': liked, 'count': memory.like_count()})

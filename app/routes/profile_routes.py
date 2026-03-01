@@ -61,7 +61,7 @@ def me():
                 current_user.couple.pet_name = None
 
         db.session.commit()
-        flash('프로필이 저장됐어요 💕', 'success')
+        flash('프로필이 저장되었습니다.', 'success')
         return redirect(url_for('profile.me'))
 
     partner = None

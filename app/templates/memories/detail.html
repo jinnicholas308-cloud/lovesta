@@ -42,7 +42,7 @@
              alt="추억 사진" class="w-full max-h-96 object-cover"
              onerror="this.parentElement.querySelector('.img-fallback').style.display='flex';this.style.display='none'" />
         <div class="img-fallback hidden bg-gradient-to-br from-rose-50 to-pink-100 h-48 items-center justify-center">
-          <span class="text-5xl">💝</span>
+          <span class="text-5xl">♥</span>
         </div>
         {% endif %}
       {% endif %}
@@ -78,7 +78,7 @@
       <p class="text-gray-800 leading-relaxed mb-3">{{ memory.caption or '' }}</p>
 
       {% if memory.location %}
-      <p class="text-sm text-gray-400 mb-4">📍 {{ memory.location }}</p>
+      <p class="text-sm text-gray-400 mb-4">{{ memory.location }}</p>
       {% endif %}
 
       <!-- Like -->

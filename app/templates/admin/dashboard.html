@@ -4,7 +4,7 @@
 {% block content %}
 <div class="space-y-6">
   <div class="flex items-center justify-between">
-    <h1 class="text-2xl font-bold text-gray-800">🛠️ 관리자 대시보드</h1>
+    <h1 class="text-2xl font-bold text-gray-800">관리자 대시보드</h1>
     <span class="text-xs bg-rose-100 text-rose-600 px-3 py-1 rounded-full font-medium">Admin</span>
   </div>
 
@@ -33,14 +33,14 @@
   <!-- 문의 + 댓글 미니 stat -->
   <div class="grid grid-cols-2 gap-4">
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center gap-4">
-      <div class="w-12 h-12 rounded-xl bg-yellow-50 flex items-center justify-center text-xl">📨</div>
+      <div class="w-12 h-12 rounded-xl bg-yellow-50 flex items-center justify-center text-xl"></div>
       <div>
         <p class="text-2xl font-bold text-yellow-600">{{ stats.inquiries_pending }}</p>
         <p class="text-xs text-gray-400">대기 중 문의</p>
       </div>
     </div>
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center gap-4">
-      <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-xl">💬</div>
+      <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-xl"></div>
       <div>
         <p class="text-2xl font-bold text-blue-500">{{ stats.comments }}</p>
         <p class="text-xs text-gray-400">전체 댓글</p>
@@ -51,7 +51,7 @@
   <!-- 펫 등급별 생성 통계 -->
   {% if stats.pet_stats %}
   <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-    <h2 class="font-semibold text-gray-700 mb-3">🐾 펫 등급별 생성 현황</h2>
+    <h2 class="font-semibold text-gray-700 mb-3">펫 등급별 생성 현황</h2>
     <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
       {% for rarity, data in stats.pet_stats.items() %}
       <div class="text-center p-3 rounded-xl" style="background: {{ data.color }}10;">
@@ -67,27 +67,27 @@
   <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
     <a href="{{ url_for('admin.user_list') }}"
        class="bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-md hover:border-rose-200 transition block group">
-      <p class="font-semibold text-gray-700 group-hover:text-rose-500 transition">👥 유저 관리</p>
+      <p class="font-semibold text-gray-700 group-hover:text-rose-500 transition">유저 관리</p>
       <p class="text-xs text-gray-400 mt-1">계정 조회·권한 관리</p>
     </a>
     <a href="{{ url_for('admin.memory_list') }}"
        class="bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-md hover:border-rose-200 transition block group">
-      <p class="font-semibold text-gray-700 group-hover:text-rose-500 transition">🖼️ 추억 관리</p>
+      <p class="font-semibold text-gray-700 group-hover:text-rose-500 transition">추억 관리</p>
       <p class="text-xs text-gray-400 mt-1">콘텐츠 조회·삭제</p>
     </a>
     <a href="{{ url_for('admin.couple_list') }}"
        class="bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-md hover:border-rose-200 transition block group">
-      <p class="font-semibold text-gray-700 group-hover:text-rose-500 transition">💑 커플 관리</p>
+      <p class="font-semibold text-gray-700 group-hover:text-rose-500 transition">커플 관리</p>
       <p class="text-xs text-gray-400 mt-1">인원 증설·펫 지급</p>
     </a>
     <a href="{{ url_for('admin.pet_list') }}"
        class="bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-md hover:border-rose-200 transition block group">
-      <p class="font-semibold text-gray-700 group-hover:text-rose-500 transition">🐾 펫 관리</p>
+      <p class="font-semibold text-gray-700 group-hover:text-rose-500 transition">펫 관리</p>
       <p class="text-xs text-gray-400 mt-1">수정·삭제·조회</p>
     </a>
     <a href="{{ url_for('admin.inquiry_list') }}"
        class="bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-md hover:border-rose-200 transition block group relative">
-      <p class="font-semibold text-gray-700 group-hover:text-rose-500 transition">📨 문의 관리</p>
+      <p class="font-semibold text-gray-700 group-hover:text-rose-500 transition">문의 관리</p>
       <p class="text-xs text-gray-400 mt-1">문의 답변·처리</p>
       {% if stats.inquiries_pending > 0 %}
       <span class="absolute top-3 right-3 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold">
@@ -102,7 +102,7 @@
     <!-- 최근 가입 유저 -->
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
       <h2 class="font-semibold text-gray-700 mb-3 flex items-center gap-2">
-        🆕 최근 가입 <span class="text-xs text-gray-400 font-normal">최근 5명</span>
+        최근 가입 <span class="text-xs text-gray-400 font-normal">최근 5명</span>
       </h2>
       <div class="space-y-2">
         {% for u in recent_users %}
@@ -116,7 +116,7 @@
           </div>
           <div class="text-right shrink-0">
             <span class="text-xs text-gray-300">{{ u.created_at.strftime('%m.%d') }}</span>
-            <p class="text-xs text-amber-500 font-medium">🎫 {{ u.reroll_tickets or 0 }}</p>
+            <p class="text-xs text-amber-500 font-medium">{{ u.reroll_tickets or 0 }}</p>
           </div>
         </div>
         {% endfor %}
@@ -129,7 +129,7 @@
     <!-- 최근 업로드 추억 -->
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
       <h2 class="font-semibold text-gray-700 mb-3 flex items-center gap-2">
-        📷 최근 추억 <span class="text-xs text-gray-400 font-normal">최근 5개</span>
+        최근 추억 <span class="text-xs text-gray-400 font-normal">최근 5개</span>
       </h2>
       <div class="space-y-2">
         {% for m in recent_memories %}
@@ -139,10 +139,10 @@
               {% if m.image_path.startswith('http') %}
               <img src="{{ m.image_path }}" class="w-full h-full object-cover" alt="" />
               {% else %}
-              <div class="w-full h-full bg-rose-50 flex items-center justify-center text-rose-300 text-xs">📷</div>
+              <div class="w-full h-full bg-rose-50 flex items-center justify-center text-rose-300 text-xs"></div>
               {% endif %}
             {% else %}
-            <div class="w-full h-full bg-gray-50 flex items-center justify-center text-gray-300 text-xs">📝</div>
+            <div class="w-full h-full bg-gray-50 flex items-center justify-center text-gray-300 text-xs"></div>
             {% endif %}
           </div>
           <div class="flex-1 min-w-0">

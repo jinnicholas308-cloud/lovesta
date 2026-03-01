@@ -8,17 +8,17 @@
   <div>
     {% if couple %}
     <h1 class="text-xl font-black text-gray-800 gradient-text">
-      {{ couple.couple_name or '우리의 추억 ♥' }}
+      {{ couple.couple_name or '우리의 추억' }}
     </h1>
     {% if couple.days_together is not none %}
     <p class="text-sm text-rose-400 font-medium mt-0.5">
       <span data-i18n="feed.together_for">함께한 지</span>
       <span class="font-black">{{ couple.days_together }}</span>
-      <span data-i18n="feed.days_label">일 ♥</span>
+      <span data-i18n="feed.days_label">일</span>
     </p>
     {% endif %}
     {% else %}
-    <h1 class="text-xl font-black text-gray-800">Lovesta 💕</h1>
+    <h1 class="text-xl font-black text-gray-800">Lovesta</h1>
     {% endif %}
   </div>
   <a href="{{ url_for('memories.upload') }}"
@@ -31,8 +31,8 @@
 <div class="glass rounded-2xl p-4 mb-5 slide-up" style="animation-delay:.05s">
   <div class="flex items-center justify-between mb-3">
     <div class="flex items-center gap-2">
-      <span class="text-sm font-bold text-gray-500">📅 출석</span>
-      <span class="text-xs text-gray-400">🎟️ <span id="feed-tickets" class="font-black text-rose-500">-</span>장</span>
+      <span class="text-sm font-bold text-gray-500">출석</span>
+      <span class="text-xs text-gray-400"><span id="feed-tickets" class="font-black text-rose-500">-</span>장</span>
     </div>
     <button id="feed-checkin-btn"
             class="gradient-rose text-white text-[11px] font-bold px-3 py-1 rounded-full
@@ -54,7 +54,7 @@
   var cb=document.getElementById('feed-checkin-btn');
   fetch('/attendance/status').then(function(r){return r.json()}).then(function(d){
     document.getElementById('feed-tickets').textContent=d.total_tickets||0;
-    if(d.checked_today){cb.disabled=true;cb.textContent='완료 ✅';}
+    if(d.checked_today){cb.disabled=true;cb.textContent='완료';}
     if(d.week_progress&&d.week_progress.days){
       d.week_progress.days.forEach(function(day,i){
         var el=document.getElementById('fw-'+i);if(!el)return;
@@ -68,7 +68,7 @@
     cb.disabled=true;cb.textContent='...';
     var csrfToken=document.querySelector('meta[name="csrf-token"]').content;
     fetch('/attendance/check-in',{method:'POST',headers:{'X-CSRFToken':csrfToken}}).then(function(r){return r.json()}).then(function(d){
-      if(d.success){cb.textContent='완료 ✅';document.getElementById('feed-tickets').textContent=d.total_tickets;location.reload();}
+      if(d.success){cb.textContent='완료';document.getElementById('feed-tickets').textContent=d.total_tickets;location.reload();}
       else{cb.textContent=d.message;}
     }).catch(function(){cb.disabled=false;cb.textContent='출석 체크';});
   });
@@ -118,16 +118,16 @@
           {% if memory.image_path.startswith('http') %}
           <img src="{{ memory.image_path }}" alt="추억"
                class="card-img w-full h-full object-cover"
-               onerror="this.parentElement.innerHTML='<div class=\'flex items-center justify-center w-full h-full\'><span class=\'text-5xl\'>💝</span></div>'" />
+               onerror="this.parentElement.innerHTML='<div class=\'flex items-center justify-center w-full h-full\'><svg class=\'w-12 h-12 text-rose-300\' fill=\'currentColor\' viewBox=\'0 0 24 24\'><path d=\'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z\'/></svg></div>'" />
           {% else %}
           <img src="{{ url_for('memories.uploaded_file', filename=memory.image_path) }}" alt="추억"
                class="card-img w-full h-full object-cover"
-               onerror="this.parentElement.innerHTML='<div class=\'flex items-center justify-center w-full h-full\'><span class=\'text-5xl\'>💝</span></div>'" />
+               onerror="this.parentElement.innerHTML='<div class=\'flex items-center justify-center w-full h-full\'><svg class=\'w-12 h-12 text-rose-300\' fill=\'currentColor\' viewBox=\'0 0 24 24\'><path d=\'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z\'/></svg></div>'" />
           {% endif %}
         {% endif %}
       {% else %}
       <div class="flex items-center justify-center w-full h-full">
-        <span class="text-5xl">💝</span>
+        <svg class="w-12 h-12 text-rose-300" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
       </div>
       {% endif %}
 
@@ -145,11 +145,11 @@
       <div class="flex items-center justify-between mt-2">
         <div class="flex items-center gap-1 text-xs text-gray-400">
           {% if memory.location %}
-          <span class="line-clamp-1 max-w-[90px]">📍 {{ memory.location }}</span>
+          <span class="line-clamp-1 max-w-[90px]">{{ memory.location }}</span>
           {% endif %}
         </div>
         <div class="flex items-center gap-1.5 text-xs text-gray-400">
-          <span>💬 {{ memory.comments.count() }}</span>
+          <span>{{ memory.comments.count() }}</span>
         </div>
       </div>
       <p class="text-xs text-gray-300 mt-1.5 font-medium">
@@ -183,7 +183,7 @@
 <div class="text-center py-20 slide-up">
   <div class="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-rose-100 to-pink-100
               flex items-center justify-center mb-5 shadow-inner">
-    <span class="text-4xl">📷</span>
+    <svg class="w-10 h-10 text-rose-300" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/></svg>
   </div>
   <p class="font-bold text-gray-600 text-lg" data-i18n="feed.empty_title">아직 추억이 없네요</p>
   <p class="text-sm text-gray-400 mt-1.5" data-i18n="feed.empty_sub">첫 번째 추억을 기록해보세요!</p>

@@ -5,7 +5,7 @@
 <div class="space-y-4">
   <div class="flex items-center gap-4 flex-wrap">
     <a href="{{ url_for('admin.dashboard') }}" class="text-sm text-gray-400 hover:text-rose-500">← 대시보드</a>
-    <h1 class="text-xl font-bold text-gray-800">🐾 펫 관리</h1>
+    <h1 class="text-xl font-bold text-gray-800">펫 관리</h1>
     <span class="text-sm text-gray-400 ml-auto">총 {{ pets.total }}마리</span>
   </div>
 
@@ -77,7 +77,7 @@
         <button type="button" onclick="toggleEditForm({{ pet.id }})"
                 class="text-xs text-blue-500 hover:text-blue-600 transition underline">수정</button>
         <form method="POST" action="{{ url_for('admin.delete_pet', pet_id=pet.id) }}"
-              onsubmit="return confirm('⚠️ 펫 #{{ pet.id }} {{ pet.display_name }}을(를) 삭제할까요? 되돌릴 수 없습니다.')">
+              onsubmit="return confirm('펫 #{{ pet.id }} {{ pet.display_name }}을(를) 삭제할까요? 되돌릴 수 없습니다.')">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <button type="submit" class="text-xs text-red-300 hover:text-red-500 transition underline">삭제</button>
         </form>

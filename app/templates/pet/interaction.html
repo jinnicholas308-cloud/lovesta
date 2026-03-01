@@ -16,7 +16,7 @@
 <div class="max-w-md mx-auto space-y-5">
 
   <div class="text-center slide-up">
-    <h1 class="text-xl font-black gradient-text">🎮 미니게임</h1>
+    <h1 class="text-xl font-black gradient-text">미니게임</h1>
     <p class="text-sm text-gray-400 mt-1">하트를 20개 터뜨려서 리롤권 2장을 받으세요!</p>
   </div>
 
@@ -34,7 +34,7 @@
     <div id="game-msg" class="absolute inset-0 flex flex-col items-center justify-center z-10">
       <button id="start-btn" onclick="startGame()"
               class="gradient-rose text-white font-black text-lg px-10 py-4 rounded-2xl shadow-lg
-                     hover:opacity-90 active:scale-95 transition-all">🎮 게임 시작!</button>
+                     hover:opacity-90 active:scale-95 transition-all">게임 시작!</button>
     </div>
   </div>
 
@@ -89,12 +89,12 @@ function endGame(){
   document.getElementById('result-area').classList.remove('hidden');
   var rt=document.getElementById('result-text'),rs=document.getElementById('result-sub');
   if(score>=goal){
-    rt.textContent='🎉 성공! '+score+'개 터뜨렸어요!';rs.textContent='리롤권 2장을 받는 중...';
+    rt.textContent='성공! '+score+'개 터뜨렸어요!';rs.textContent='리롤권 2장을 받는 중...';
     var csrfToken=document.querySelector('meta[name="csrf-token"]').content;
     fetch('/pet/interaction-bonus',{method:'POST',headers:{'X-CSRFToken':csrfToken}}).then(function(r){return r.json()}).then(function(d){
       if(d.success)rs.textContent='✅ '+d.message;else rs.textContent=d.message;
     }).catch(function(){rs.textContent='보상 수령 중 오류';});
-  }else{rt.textContent='😢 시간 초과! '+score+'/'+goal;rs.textContent='다시 도전해보세요!';}
+  }else{rt.textContent='시간 초과! '+score+'/'+goal;rs.textContent='다시 도전해보세요!';}
 }
 </script>
 {% endblock %}

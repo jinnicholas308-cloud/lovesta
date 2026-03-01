@@ -11,7 +11,7 @@
       <p class="text-sm text-gray-400 mt-0.5">보유 펫 {{ pets|length }}마리</p>
     </div>
     <div class="flex items-center gap-2">
-      <span class="text-sm text-gray-500">🎟️ <span id="ticket-count" class="font-black text-rose-500">{{ tickets }}</span>장</span>
+      <span class="text-sm text-gray-500"><span id="ticket-count" class="font-black text-rose-500">{{ tickets }}</span>장</span>
     </div>
   </div>
 
@@ -20,12 +20,12 @@
     <a href="{{ url_for('pet.gacha') }}?mode=single"
        class="flex-1 text-center bg-white border-2 border-rose-200 text-rose-500 font-bold py-2.5 rounded-xl
               hover:bg-rose-50 active:scale-95 transition-all text-sm">
-      🎰 단일 뽑기 (1장)
+      단일 뽑기 (1장)
     </a>
     <a href="{{ url_for('pet.gacha') }}"
        class="flex-1 text-center gradient-rose text-white font-bold py-2.5 rounded-xl
               shadow-sm hover:opacity-90 active:scale-95 transition-all text-sm">
-      🎰 10연차 뽑기 (10장)
+      10연차 뽑기 (10장)
     </a>
   </div>
 
@@ -74,7 +74,7 @@
     <!-- 카드 다운로드 -->
     <button onclick="downloadCard('{{ active_pet.display_emoji }}','{{ active_pet.display_name }}','{{ active_pet.rarity_info.label }}','{{ active_pet.rarity_info.color }}','{{ active_pet.breed_info.name }}','{{ active_pet.personality or "" }} {{ active_pet.personality_label or "" }}')"
             class="mt-3 text-xs text-gray-400 hover:text-rose-500 border border-gray-200 hover:border-rose-200 px-3 py-1.5 rounded-full transition-all">
-      📥 카드 저장 (워터마크)
+      카드 저장 (워터마크)
     </button>
   </div>
   {% endif %}
@@ -108,7 +108,7 @@
     <p id="checkin-msg" class="text-xs text-center text-gray-400 mt-3"></p>
     <a href="{{ url_for('pet.interaction_game') }}"
        class="block text-center text-xs text-purple-500 hover:text-purple-600 font-semibold mt-2 transition-colors">
-      🎮 미니게임으로 리롤권 받기 →
+      미니게임으로 리롤권 받기 →
     </a>
   </div>
 
@@ -145,7 +145,7 @@
         </button>
         {% endif %}
         <button onclick="downloadCard('{{ pet.display_emoji }}','{{ pet.display_name }}','{{ pet.rarity_info.label }}','{{ pet.rarity_info.color }}','{{ pet.breed_info.name }}','{{ pet.personality or "" }}')"
-                class="block mx-auto mt-1.5 text-[10px] text-gray-300 hover:text-rose-400 transition-colors">📥 저장</button>
+                class="block mx-auto mt-1.5 text-[10px] text-gray-300 hover:text-rose-400 transition-colors">저장</button>
       </div>
       {% endfor %}
     </div>
@@ -154,13 +154,13 @@
   <div class="text-center py-16 slide-up">
     <div class="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-rose-100 to-pink-100
                 flex items-center justify-center mb-5 shadow-inner">
-      <span class="text-4xl">🎰</span>
+      <span class="text-4xl"></span>
     </div>
     <p class="font-bold text-gray-600 text-lg">아직 펫이 없어요</p>
     <p class="text-sm text-gray-400 mt-1.5">가챠를 돌려 첫 펫을 만나보세요!</p>
     <a href="{{ url_for('pet.gacha') }}"
        class="inline-block mt-6 gradient-rose text-white text-sm font-semibold px-8 py-3
-              rounded-full shadow-md hover:opacity-90 active:scale-95 transition-all">🎰 뽑기</a>
+              rounded-full shadow-md hover:opacity-90 active:scale-95 transition-all">뽑기</a>
   </div>
   {% endif %}
 

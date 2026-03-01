@@ -339,6 +339,14 @@ def inquiry_detail(inquiry_id):
                 inquiry.admin_reply = reply_text
                 inquiry.replied_at = datetime.utcnow()
                 inquiry.status = 'answered'
+                # 유저에게 답변 알림
+                from app.models.notification import Notification
+                Notification.send(
+                    inquiry.user_id, 'inquiry_reply',
+                    '문의에 답변이 도착했습니다.',
+                    body=reply_text[:80],
+                    url=f'/inquiry/{inquiry.id}'
+                )
                 db.session.commit()
                 send_inquiry_reply(inquiry, reply_text)
                 flash('답변이 전송되었습니다!', 'success')

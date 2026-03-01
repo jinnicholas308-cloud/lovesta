@@ -103,7 +103,7 @@ def info():
                 couple.couple_name = couple_name_str
 
             db.session.commit()
-            flash('커플 정보가 업데이트되었습니다! 💕', 'success')
+            flash('커플 정보가 업데이트되었습니다!', 'success')
             return redirect(url_for('couple.info'))
 
     members = couple.members.all()

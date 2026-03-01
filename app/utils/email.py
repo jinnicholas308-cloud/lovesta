@@ -84,14 +84,14 @@ def _html_template(title, body_html, accent_color='#f43f5e'):
 <body style="margin:0;padding:0;font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:#fdf2f8;">
 <div style="max-width:520px;margin:24px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(244,63,94,.12);">
   <div style="background:linear-gradient(135deg,{accent_color},#ec4899);padding:28px 24px;text-align:center;">
-    <h1 style="color:#fff;font-size:20px;margin:0;">♥ Lovesta</h1>
+    <h1 style="color:#fff;font-size:20px;margin:0;">Lovesta</h1>
     <p style="color:rgba(255,255,255,.85);font-size:13px;margin:6px 0 0;">{title}</p>
   </div>
   <div style="padding:28px 24px;">
     {body_html}
   </div>
   <div style="padding:16px 24px;background:#fdf2f8;text-align:center;">
-    <p style="color:#9ca3af;font-size:11px;margin:0;">Lovesta — 우리의 추억을 함께 기록해요 💕</p>
+    <p style="color:#9ca3af;font-size:11px;margin:0;">Lovesta — 우리의 추억을 함께 기록해요</p>
   </div>
 </div>
 </body></html>'''
@@ -166,7 +166,7 @@ def send_limit_increase_notification(couple, new_limit):
                 border-radius:12px;padding:20px;text-align:center;
                 border:2px solid {colors["accent"]}40;">
       <p style="font-size:18px;font-weight:800;color:{colors["text"]};margin:0;">
-        🎉 피드 정원이 확장되었습니다!
+        피드 정원이 확장되었습니다!
       </p>
       <p style="font-size:14px;color:{colors["text"]}cc;margin:8px 0 0;">
         <strong>{couple.invite_code}</strong>님의 피드가
@@ -174,12 +174,12 @@ def send_limit_increase_notification(couple, new_limit):
       </p>
     </div>
     <p style="text-align:center;font-size:12px;color:#9ca3af;margin-top:16px;">
-      더 많은 추억을 함께 나눠보세요! 💕
+      더 많은 추억을 함께 나눠보세요!
     </p>
     '''
 
     for member in couple.members.all():
         if member.email:
             _send_raw(member.email,
-                      f'[Lovesta] 🎉 피드 정원 확장 완료 ({new_limit}명)',
+                      f'[Lovesta] 피드 정원 확장 완료 ({new_limit}명)',
                       _html_template('피드 정원 확장 완료!', body, accent_color=colors['accent']))

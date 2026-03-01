@@ -60,7 +60,7 @@ def register():
         # 세션 재생성 후 로그인 (세션 고정 공격 방지)
         session.clear()
         login_user(user, remember=True)
-        flash(f'환영합니다, {escape(username)}님! 💕', 'success')
+        flash(f'환영합니다, {escape(username)}님!', 'success')
         return redirect(url_for('couple.setup'))
 
     return render_template('auth/register.html')
