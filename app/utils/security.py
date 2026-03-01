@@ -81,15 +81,18 @@ def apply_security_headers(response):
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     # 권한 정책
     response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
-    # Content Security Policy (Tailwind CDN + Google OAuth + Cloudinary)
+    # Content Security Policy (Tailwind CDN + Google OAuth + Cloudinary + AdSense)
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://accounts.google.com https://apis.google.com; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com "
+        "https://accounts.google.com https://apis.google.com "
+        "https://pagead2.googlesyndication.com https://adservice.google.com https://www.googletagservices.com; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com; "
-        "img-src 'self' data: https://res.cloudinary.com https://*.googleusercontent.com blob:; "
-        "connect-src 'self'; "
-        "frame-src https://accounts.google.com; "
+        "img-src 'self' data: https://res.cloudinary.com https://*.googleusercontent.com "
+        "https://pagead2.googlesyndication.com https://*.google.com blob:; "
+        "connect-src 'self' https://pagead2.googlesyndication.com https://*.google.com; "
+        "frame-src https://accounts.google.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com; "
         "object-src 'none'; "
         "base-uri 'self';"
     )
