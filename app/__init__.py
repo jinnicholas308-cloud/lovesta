@@ -1,10 +1,7 @@
 import os
 from flask import Flask, request, session
-from flask_wtf.csrf import CSRFProtect
 from app.config import config_map
-from app.extensions import db, login_manager
-
-csrf = CSRFProtect()
+from app.extensions import db, login_manager, csrf
 
 
 def create_app(env: str = None):

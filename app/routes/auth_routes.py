@@ -12,7 +12,7 @@ Google OAuth is handled in oauth_routes.py.
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from flask_login import login_user, logout_user, login_required, current_user
 from markupsafe import escape
-from app.extensions import db
+from app.extensions import db, csrf
 from app.models import User
 from app.utils.validators import validate_username, validate_password_strength, is_valid_email
 from app.utils.security import rate_limit, safe_redirect_url
@@ -95,12 +95,20 @@ def login():
 
 
 @auth_bp.route('/logout', methods=['GET', 'POST'])
-@login_required
+@csrf.exempt
 def logout():
-    logout_user()
+    """로그아웃: CSRF 면제 + remember me 쿠키까지 확실히 제거."""
+    if current_user.is_authenticated:
+        logout_user()
+        # 주의: session.clear()를 logout_user() 뒤에 호출하면
+        #   Flask-Login의 _remember="clear" 플래그가 지워져서
+        #   remember me 쿠키가 삭제되지 않는 버그 발생!
     session.clear()
     flash('로그아웃 되었습니다.', 'info')
-    return redirect(url_for('auth.login'))
+    resp = redirect(url_for('auth.login'))
+    # remember me 쿠키 수동 삭제 (Flask-Login 플래그가 날아간 경우 대비)
+    resp.delete_cookie('remember_token', path='/')
+    return resp
 
 
 # ─── 아이디 / 비밀번호 찾기 ────────────────────────────────────────────────────
