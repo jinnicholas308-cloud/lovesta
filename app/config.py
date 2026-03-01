@@ -90,22 +90,24 @@ class DevelopmentConfig(Config):
     SESSION_COOKIE_SAMESITE = 'Lax'
 
 
+def _production_secret_key() -> str:
+    """프로덕션 SECRET_KEY: 환경변수 우선, 없으면 랜덤 생성."""
+    import secrets as _sec
+    key = os.getenv('SECRET_KEY', '')
+    if not key or key == 'dev-secret-key-change-in-production':
+        return _sec.token_hex(32)
+    return key
+
+
 class ProductionConfig(Config):
     DEBUG = False
+    SECRET_KEY = _production_secret_key()
     # HTTPS 환경에서 쿠키 보안 설정 (Railway는 HTTPS 제공)
     SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
     REMEMBER_COOKIE_SECURE = True          # remember me 쿠키 HTTPS 전용
     REMEMBER_COOKIE_HTTPONLY = True
-    # 프로덕션에선 SECRET_KEY 반드시 환경변수에서 가져오기
-    @property
-    def SECRET_KEY(self):  # noqa: N802
-        key = os.getenv('SECRET_KEY', '')
-        if not key or key == 'dev-secret-key-change-in-production':
-            import secrets
-            return secrets.token_hex(32)
-        return key
 
 
 config_map = {
