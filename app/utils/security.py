@@ -81,10 +81,10 @@ def apply_security_headers(response):
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     # 권한 정책
     response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
-    # Content Security Policy (인라인 스크립트/스타일 허용 — SPA가 아니므로)
+    # Content Security Policy (Tailwind CDN + Google OAuth + Cloudinary)
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://accounts.google.com https://apis.google.com; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com; "
         "img-src 'self' data: https://res.cloudinary.com https://*.googleusercontent.com blob:; "
