@@ -1,22 +1,25 @@
 """
 Comment routes: add and delete comments on memories.
+보안: 입력 길이 제한, couple 권한 검증, 레이트 리밋.
 """
 from flask import Blueprint, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
 from app.extensions import db
 from app.models import Memory, Comment
+from app.utils.security import rate_limit
 
 comment_bp = Blueprint('comments', __name__)
 
 
 @comment_bp.route('/memory/<int:memory_id>/comment', methods=['POST'])
 @login_required
+@rate_limit(max_requests=15, window=60, scope='comment_add')
 def add_comment(memory_id):
     memory = Memory.query.get_or_404(memory_id)
-    if memory.couple_id != current_user.couple_id:
+    if not current_user.couple_id or memory.couple_id != current_user.couple_id:
         return jsonify({'error': '권한 없음'}), 403
 
-    content = request.form.get('content', '').strip()
+    content = request.form.get('content', '').strip()[:1000]  # 1000자 제한
     if not content:
         flash('댓글 내용을 입력해주세요.', 'error')
         return redirect(url_for('memories.detail', memory_id=memory_id))

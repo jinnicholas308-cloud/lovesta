@@ -1,18 +1,22 @@
 """
 Couple management routes: create/join couple, view couple info.
+보안: invite_code 길이 제한, couple_name XSS 방지, 레이트 리밋.
 """
 import secrets
 from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
+from markupsafe import escape
 from app.extensions import db
 from app.models import Couple, User
+from app.utils.security import rate_limit, sanitize_input
 
 couple_bp = Blueprint('couple', __name__, url_prefix='/couple')
 
 
 @couple_bp.route('/setup', methods=['GET', 'POST'])
 @login_required
+@rate_limit(max_requests=10, window=60, scope='couple_setup')
 def setup():
     if current_user.couple_id:
         return redirect(url_for('memories.feed'))
@@ -21,8 +25,8 @@ def setup():
         action = request.form.get('action')
 
         if action == 'create':
-            couple_name = request.form.get('couple_name', '').strip()
-            anniversary_str = request.form.get('anniversary', '')
+            couple_name = sanitize_input(request.form.get('couple_name', ''), max_length=50)
+            anniversary_str = request.form.get('anniversary', '').strip()[:10]
 
             couple = Couple(invite_code=secrets.token_urlsafe(8))
             if couple_name:
@@ -38,30 +42,27 @@ def setup():
             current_user.couple_id = couple.id
             db.session.commit()
 
-            flash(f'커플 코드: {couple.invite_code}', 'success')
+            flash(f'커플 코드: {escape(couple.invite_code)}', 'success')
             return redirect(url_for('memories.feed'))
 
         elif action == 'join':
-            invite_code = request.form.get('invite_code', '').strip()
+            invite_code = request.form.get('invite_code', '').strip()[:20]
             couple = Couple.query.filter_by(invite_code=invite_code).first()
 
             if not couple:
                 flash('유효하지 않은 커플 코드입니다.', 'error')
                 return render_template('couple/setup.html')
 
-            # max_members 기반 제한 (기본 2명)
             max_m = getattr(couple, 'max_members', 2) or 2
             current_count = couple.members.count()
 
             if current_count >= max_m:
-                # 보안: 최신 가입순으로 max_m명만 유지, 나머지 차단
                 ordered = couple.members.order_by(User.created_at.desc()).all()
                 if current_count > max_m:
                     for overflow_user in ordered[max_m:]:
                         overflow_user.couple_id = None
                     db.session.commit()
 
-                # 재확인
                 if couple.members.count() >= max_m:
                     flash(f'이미 {max_m}명이 연결된 코드입니다. 인원 증설이 필요하면 문의해주세요.', 'error')
                     return render_template('couple/setup.html')
@@ -86,8 +87,8 @@ def info():
         action = request.form.get('action')
 
         if action == 'update_anniversary':
-            anniversary_str = request.form.get('anniversary', '').strip()
-            couple_name_str = request.form.get('couple_name', '').strip()
+            anniversary_str = request.form.get('anniversary', '').strip()[:10]
+            couple_name_str = sanitize_input(request.form.get('couple_name', ''), max_length=50)
 
             if anniversary_str:
                 try:

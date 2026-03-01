@@ -1,8 +1,9 @@
 """
 Daily attendance tracking for reroll ticket rewards.
 Server UTC time is the single source of truth to prevent client time manipulation.
+Tickets are awarded to the COUPLE (not the individual user).
 """
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
 from app.extensions import db
 
 
@@ -22,12 +23,11 @@ class Attendance(db.Model):
     def check_in(user):
         """
         출석 체크 (하루 1회, 서버 UTC 기준).
-        리롤권 지급: 매일 1장 + 7일 연속 완성 시 보너스 3장.
+        리롤권은 커플 통합 지급: 매일 1장 + 7일 연속 완성 시 보너스 3장.
         Returns (success: bool, message: str, tickets_earned: int)
         """
         today = datetime.utcnow().date()
 
-        # 중복 방지 (Idempotency)
         existing = Attendance.query.filter_by(user_id=user.id, date=today).first()
         if existing:
             return False, '오늘은 이미 출석했어요!', 0
@@ -35,15 +35,19 @@ class Attendance(db.Model):
         att = Attendance(user_id=user.id, date=today)
         db.session.add(att)
 
-        # 기본 리롤권 1장
         tickets = 1
-        user.reroll_tickets = (user.reroll_tickets or 0) + 1
 
         # 7일 연속 출석 보너스 체크
         streak = Attendance.get_current_streak(user.id, today)
-        if streak >= 6:  # 이번이 7일째 (이미 6일 있고 오늘 추가)
-            user.reroll_tickets += 3
+        if streak >= 6:
             tickets += 3
+
+        # 커플 통합 티켓 지급
+        if user.couple:
+            user.couple.reroll_tickets = (user.couple.reroll_tickets or 0) + tickets
+        else:
+            # 커플 없으면 개인 저장 (fallback)
+            user.reroll_tickets = (user.reroll_tickets or 0) + tickets
 
         db.session.commit()
         return True, f'출석 완료! 리롤권 {tickets}장 획득', tickets
@@ -70,7 +74,6 @@ class Attendance(db.Model):
     def get_week_progress(user_id):
         """이번 주(월~일) 출석 현황 반환."""
         today = datetime.utcnow().date()
-        # 이번 주 월요일
         monday = today - timedelta(days=today.weekday())
         days = []
         for i in range(7):

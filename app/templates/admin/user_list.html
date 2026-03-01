@@ -62,6 +62,7 @@
           <td class="px-4 py-3">
             <div class="flex items-center gap-2 flex-wrap">
               <form method="POST" action="{{ url_for('admin.toggle_admin', user_id=user.id) }}" onsubmit="return confirm('권한을 변경할까요?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <button type="submit" class="text-xs text-gray-400 hover:text-rose-500 transition underline whitespace-nowrap">{{ '권한 해제' if user.is_admin else '관리자 지정' }}</button>
               </form>
               {% if not user.is_oauth_user %}
@@ -69,6 +70,7 @@
               {% endif %}
               {% if user.id != current_user.id %}
               <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" onsubmit="return confirm('⚠️ 삭제하면 되돌릴 수 없습니다.')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <button type="submit" class="text-xs text-red-300 hover:text-red-500 transition underline whitespace-nowrap">삭제</button>
               </form>
               {% endif %}
@@ -76,6 +78,7 @@
             {% if not user.is_oauth_user %}
             <div id="reset-form-{{ user.id }}" class="hidden mt-2">
               <form method="POST" action="{{ url_for('admin.reset_user_password', user_id=user.id) }}" class="flex gap-1.5">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <input type="password" name="new_password" required minlength="6"
                        class="border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-blue-300 w-28"
                        placeholder="새 비밀번호 (6자+)" />

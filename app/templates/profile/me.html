@@ -31,8 +31,8 @@
       <h2 class="font-bold text-gray-500 text-xs uppercase tracking-widest">출석 체크 📅</h2>
       <div class="flex items-center gap-1.5">
         <span class="text-amber-500 text-lg">🎫</span>
-        <span class="font-black text-amber-600 text-lg" id="ticketCount">{{ current_user.reroll_tickets or 0 }}</span>
-        <span class="text-xs text-gray-400">리롤권</span>
+        <span class="font-black text-amber-600 text-lg" id="ticketCount">{{ current_user.couple.reroll_tickets if current_user.couple else 0 }}</span>
+        <span class="text-xs text-gray-400">커플 리롤권</span>
       </div>
     </div>
 
@@ -66,6 +66,7 @@
   <form method="POST"
         class="bg-white rounded-2xl shadow-sm border border-rose-50 p-5 space-y-4 slide-up"
         style="animation-delay:.05s">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
     <h2 class="font-bold text-gray-500 text-xs uppercase tracking-widest"
         data-i18n="profile.basic">기본 정보</h2>
@@ -249,7 +250,11 @@ async function doCheckIn() {
   btn.disabled = true;
   btn.textContent = '처리 중...';
   try {
-    var res = await fetch('/attendance/check-in', { method: 'POST' });
+    var csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+    var res = await fetch('/attendance/check-in', {
+      method: 'POST',
+      headers: { 'X-CSRFToken': csrfToken }
+    });
     var data = await res.json();
     if (data.success) {
       btn.textContent = '✅ ' + data.message;

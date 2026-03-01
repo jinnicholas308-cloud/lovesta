@@ -29,6 +29,7 @@
     </div>
 
     <form method="POST" class="space-y-4" autocomplete="on">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">사용자명</label>
         <input type="text" name="username" required maxlength="50" autocomplete="nickname"

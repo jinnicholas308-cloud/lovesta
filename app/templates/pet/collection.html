@@ -12,12 +12,21 @@
     </div>
     <div class="flex items-center gap-2">
       <span class="text-sm text-gray-500">🎟️ <span id="ticket-count" class="font-black text-rose-500">{{ tickets }}</span>장</span>
-      <a href="{{ url_for('pet.gacha') }}"
-         class="gradient-rose text-white text-sm font-bold px-4 py-2 rounded-full
-                shadow-sm hover:opacity-90 active:scale-95 transition-all">
-        🎰 10연차 뽑기
-      </a>
     </div>
+  </div>
+
+  <!-- ── 뽑기 버튼 (단일 + 10연차) ── -->
+  <div class="flex gap-2 slide-up" style="animation-delay:.03s">
+    <a href="{{ url_for('pet.gacha') }}?mode=single"
+       class="flex-1 text-center bg-white border-2 border-rose-200 text-rose-500 font-bold py-2.5 rounded-xl
+              hover:bg-rose-50 active:scale-95 transition-all text-sm">
+      🎰 단일 뽑기 (1장)
+    </a>
+    <a href="{{ url_for('pet.gacha') }}"
+       class="flex-1 text-center gradient-rose text-white font-bold py-2.5 rounded-xl
+              shadow-sm hover:opacity-90 active:scale-95 transition-all text-sm">
+      🎰 10연차 뽑기 (10장)
+    </a>
   </div>
 
   <!-- ── Active Pet Hero ── -->
@@ -47,24 +56,26 @@
         </span>
         {% endif %}
       </div>
-      <p class="text-xs text-gray-400 mt-2">{{ active_pet.breed_info.name }}</p>
     </div>
 
-    <!-- Pet rename form -->
-    <form id="rename-form" method="POST" action="{{ url_for('pet.rename', pet_id=active_pet.id) }}"
-          class="mt-4 flex items-center gap-2 max-w-xs mx-auto">
-      <input type="text" name="name" value="{{ active_pet.name or '' }}"
-             placeholder="펫 이름 지어주기..."
-             maxlength="50"
-             class="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2
-                    focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-400 transition
-                    text-center" />
-      <button type="submit"
-              class="text-sm font-bold text-rose-500 hover:text-rose-600 border border-rose-200
-                     hover:border-rose-300 px-3 py-2 rounded-xl transition-colors active:scale-95">
-        변경
-      </button>
-    </form>
+    <div class="mt-3 flex items-center justify-center gap-2">
+      <form method="POST" action="{{ url_for('pet.rename', pet_id=active_pet.id) }}"
+            class="flex items-center gap-2 max-w-xs">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <input type="text" name="name" value="{{ active_pet.name or '' }}"
+               placeholder="펫 이름 지어주기..." maxlength="50"
+               class="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2
+                      focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-400 transition text-center" />
+        <button type="submit" class="text-sm font-bold text-rose-500 hover:text-rose-600 border border-rose-200
+                     hover:border-rose-300 px-3 py-2 rounded-xl transition-colors active:scale-95">변경</button>
+      </form>
+    </div>
+
+    <!-- 카드 다운로드 -->
+    <button onclick="downloadCard('{{ active_pet.display_emoji }}','{{ active_pet.display_name }}','{{ active_pet.rarity_info.label }}','{{ active_pet.rarity_info.color }}','{{ active_pet.breed_info.name }}','{{ active_pet.personality or "" }} {{ active_pet.personality_label or "" }}')"
+            class="mt-3 text-xs text-gray-400 hover:text-rose-500 border border-gray-200 hover:border-rose-200 px-3 py-1.5 rounded-full transition-all">
+      📥 카드 저장 (워터마크)
+    </button>
   </div>
   {% endif %}
 
@@ -79,11 +90,9 @@
         출석 체크
       </button>
     </div>
-
-    <!-- Week progress circles -->
     <div id="week-bar" class="flex items-center justify-between gap-1">
       <div class="flex-1 flex items-center justify-between">
-        {% for label in ['월', '화', '수', '목', '금', '토', '일'] %}
+        {% for label in ['월','화','수','목','금','토','일'] %}
         <div class="flex flex-col items-center gap-1.5">
           <div id="day-{{ loop.index0 }}"
                class="w-9 h-9 rounded-full border-2 flex items-center justify-center text-sm font-bold
@@ -96,64 +105,52 @@
         {% endfor %}
       </div>
     </div>
-
     <p id="checkin-msg" class="text-xs text-center text-gray-400 mt-3"></p>
+    <a href="{{ url_for('pet.interaction_game') }}"
+       class="block text-center text-xs text-purple-500 hover:text-purple-600 font-semibold mt-2 transition-colors">
+      🎮 미니게임으로 리롤권 받기 →
+    </a>
   </div>
 
   <!-- ── Pet Grid ── -->
   {% if pets %}
   <div class="slide-up" style="animation-delay:.14s">
-    <h2 class="font-bold text-gray-500 text-xs uppercase tracking-widest mb-3">
-      모든 펫 ({{ pets|length }})
-    </h2>
+    <h2 class="font-bold text-gray-500 text-xs uppercase tracking-widest mb-3">모든 펫 ({{ pets|length }})</h2>
     <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
       {% for pet in pets %}
       <div class="bg-white rounded-2xl border p-4 text-center transition-all hover:shadow-md hover:-translate-y-1
                   {{ 'ring-2 ring-rose-300 border-rose-200' if pet.is_active else 'border-gray-100' }}"
            style="animation-delay: {{ loop.index0 * 0.04 }}s">
-
-        <!-- Emoji -->
         <div class="w-16 h-16 mx-auto rounded-xl flex items-center justify-center mb-2"
              style="background-color: {{ pet.rarity_info.color }}12">
           <span class="text-3xl select-none leading-none">{{ pet.display_emoji }}</span>
         </div>
-
-        <!-- Name -->
         <p class="text-sm font-bold text-gray-700 truncate">{{ pet.display_name }}</p>
-
-        <!-- Rarity badge -->
         <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full border mt-1"
               style="color:{{ pet.rarity_info.color }};border-color:{{ pet.rarity_info.color }};background-color:{{ pet.rarity_info.color }}12">
           {{ pet.rarity_info.label }}
         </span>
-
-        <!-- Personality -->
         {% if pet.personality %}
         <p class="text-[10px] text-gray-400 mt-1">{{ pet.personality }}</p>
         {% endif %}
-
-        <!-- Active badge or Set Active button -->
         {% if pet.is_active %}
         <div class="mt-2">
-          <span class="text-[10px] font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full">
-            ★ 대표 펫
-          </span>
+          <span class="text-[10px] font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full">★ 대표 펫</span>
         </div>
         {% else %}
         <button onclick="activatePet({{ pet.id }}, this)"
                 class="mt-2 text-[10px] font-semibold text-gray-400 hover:text-rose-500
-                       border border-gray-200 hover:border-rose-300 px-2.5 py-1 rounded-full
-                       transition-all active:scale-95">
+                       border border-gray-200 hover:border-rose-300 px-2.5 py-1 rounded-full transition-all active:scale-95">
           대표 펫 설정
         </button>
         {% endif %}
+        <button onclick="downloadCard('{{ pet.display_emoji }}','{{ pet.display_name }}','{{ pet.rarity_info.label }}','{{ pet.rarity_info.color }}','{{ pet.breed_info.name }}','{{ pet.personality or "" }}')"
+                class="block mx-auto mt-1.5 text-[10px] text-gray-300 hover:text-rose-400 transition-colors">📥 저장</button>
       </div>
       {% endfor %}
     </div>
   </div>
   {% else %}
-
-  <!-- Empty state -->
   <div class="text-center py-16 slide-up">
     <div class="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-rose-100 to-pink-100
                 flex items-center justify-center mb-5 shadow-inner">
@@ -163,128 +160,92 @@
     <p class="text-sm text-gray-400 mt-1.5">가챠를 돌려 첫 펫을 만나보세요!</p>
     <a href="{{ url_for('pet.gacha') }}"
        class="inline-block mt-6 gradient-rose text-white text-sm font-semibold px-8 py-3
-              rounded-full shadow-md hover:opacity-90 active:scale-95 transition-all">
-      🎰 10연차 뽑기
-    </a>
+              rounded-full shadow-md hover:opacity-90 active:scale-95 transition-all">🎰 뽑기</a>
   </div>
   {% endif %}
 
-  <!-- ── Back Link ── -->
   <a href="{{ url_for('memories.feed') }}"
-     class="block text-center text-sm text-gray-400 hover:text-rose-500 transition-colors py-2">
-    ← 피드로 돌아가기
-  </a>
-
+     class="block text-center text-sm text-gray-400 hover:text-rose-500 transition-colors py-2">← 피드로 돌아가기</a>
 </div>
 
 <script>
-(function() {
-  var checkinBtn = document.getElementById('checkin-btn');
-  var checkinMsg = document.getElementById('checkin-msg');
+(function(){
+  var checkinBtn=document.getElementById('checkin-btn');
+  var checkinMsg=document.getElementById('checkin-msg');
 
-  // ── Load attendance status on page load ──
-  fetch('/attendance/status')
-    .then(function(res) { return res.json(); })
-    .then(function(data) {
-      updateWeekBar(data.week_progress);
-      if (data.checked_today) {
-        checkinBtn.disabled = true;
-        checkinBtn.textContent = '출석 완료!';
-        checkinMsg.textContent = '오늘 출석 완료! 내일도 만나요 :)';
-      }
-    })
-    .catch(function() {});
+  fetch('/attendance/status').then(function(r){return r.json()}).then(function(d){
+    updateWeekBar(d.week_progress);
+    if(d.checked_today){checkinBtn.disabled=true;checkinBtn.textContent='출석 완료!';checkinMsg.textContent='오늘 출석 완료!';}
+    var tc=document.getElementById('ticket-count');if(tc)tc.textContent=d.total_tickets||0;
+  }).catch(function(){});
 
-  // ── Check-in button ──
-  checkinBtn.addEventListener('click', function() {
-    checkinBtn.disabled = true;
-    checkinBtn.textContent = '처리 중...';
-
-    fetch('/attendance/check-in', { method: 'POST' })
-      .then(function(res) { return res.json(); })
-      .then(function(data) {
-        if (data.success) {
-          checkinBtn.textContent = '출석 완료!';
-          checkinMsg.textContent = data.message;
-          checkinMsg.classList.remove('text-gray-400');
-          checkinMsg.classList.add('text-rose-500');
-
-          // Update ticket display
-          var ticketEl = document.getElementById('ticket-count');
-          if (ticketEl) ticketEl.textContent = data.total_tickets;
-
-          // Update week bar
-          if (data.week_progress) updateWeekBar(data.week_progress);
-
-          showToast(data.message);
-        } else {
-          checkinBtn.textContent = '출석 완료!';
-          checkinMsg.textContent = data.message;
-        }
-      })
-      .catch(function() {
-        checkinBtn.disabled = false;
-        checkinBtn.textContent = '출석 체크';
-        checkinMsg.textContent = '오류가 발생했어요. 다시 시도해주세요.';
-        checkinMsg.classList.add('text-red-400');
-      });
+  checkinBtn.addEventListener('click',function(){
+    checkinBtn.disabled=true;checkinBtn.textContent='처리 중...';
+    var csrfToken=document.querySelector('meta[name="csrf-token"]').content;
+    fetch('/attendance/check-in',{method:'POST',headers:{'X-CSRFToken':csrfToken}}).then(function(r){return r.json()}).then(function(d){
+      if(d.success){checkinBtn.textContent='출석 완료!';checkinMsg.textContent=d.message;checkinMsg.classList.remove('text-gray-400');checkinMsg.classList.add('text-rose-500');
+        var tc=document.getElementById('ticket-count');if(tc)tc.textContent=d.total_tickets;
+        if(d.week_progress)updateWeekBar(d.week_progress);showToast(d.message);
+      }else{checkinBtn.textContent='출석 완료!';checkinMsg.textContent=d.message;}
+    }).catch(function(){checkinBtn.disabled=false;checkinBtn.textContent='출석 체크';});
   });
 
-  function updateWeekBar(weekProgress) {
-    if (!weekProgress || !weekProgress.days) return;
-    var days = weekProgress.days;
-
-    for (var i = 0; i < days.length; i++) {
-      var el = document.getElementById('day-' + i);
-      if (!el) continue;
-
-      var checkIcon = el.querySelector('.check-icon');
-      var emptyIcon = el.querySelector('.empty-icon');
-
-      if (days[i].checked) {
-        el.classList.remove('border-gray-200', 'bg-white', 'text-gray-300');
-        el.classList.add('border-rose-400', 'bg-rose-50', 'text-rose-500');
-        if (checkIcon) checkIcon.classList.remove('hidden');
-        if (emptyIcon) emptyIcon.classList.add('hidden');
-      } else if (days[i].is_today) {
-        el.classList.remove('border-gray-200', 'text-gray-300');
-        el.classList.add('border-rose-300', 'text-rose-300');
-      } else if (days[i].is_future) {
-        el.classList.add('opacity-40');
-      }
+  function updateWeekBar(wp){
+    if(!wp||!wp.days)return;var days=wp.days;
+    for(var i=0;i<days.length;i++){
+      var el=document.getElementById('day-'+i);if(!el)continue;
+      var ci=el.querySelector('.check-icon'),ei=el.querySelector('.empty-icon');
+      if(days[i].checked){el.classList.remove('border-gray-200','bg-white','text-gray-300');el.classList.add('border-rose-400','bg-rose-50','text-rose-500');if(ci)ci.classList.remove('hidden');if(ei)ei.classList.add('hidden');}
+      else if(days[i].is_today){el.classList.remove('border-gray-200','text-gray-300');el.classList.add('border-rose-300','text-rose-300');}
+      else if(days[i].is_future){el.classList.add('opacity-40');}
     }
   }
 
-  // ── Activate pet ──
-  window.activatePet = function(petId, btn) {
-    btn.disabled = true;
-    btn.textContent = '설정 중...';
-
-    fetch('/pet/' + petId + '/activate', { method: 'POST' })
-      .then(function(res) { return res.json(); })
-      .then(function(data) {
-        if (data.success) {
-          showToast('대표 펫이 변경되었어요!');
-          setTimeout(function() { location.reload(); }, 600);
-        } else {
-          btn.disabled = false;
-          btn.textContent = '대표 펫 설정';
-          alert(data.error || '설정에 실패했어요.');
-        }
-      })
-      .catch(function() {
-        btn.disabled = false;
-        btn.textContent = '대표 펫 설정';
-      });
+  window.activatePet=function(id,btn){
+    btn.disabled=true;btn.textContent='설정 중...';
+    var csrfToken=document.querySelector('meta[name="csrf-token"]').content;
+    fetch('/pet/'+id+'/activate',{method:'POST',headers:{'X-CSRFToken':csrfToken}}).then(function(r){return r.json()}).then(function(d){
+      if(d.success){showToast('대표 펫이 변경되었어요!');setTimeout(function(){location.reload()},600);}
+      else{btn.disabled=false;btn.textContent='대표 펫 설정';}
+    }).catch(function(){btn.disabled=false;btn.textContent='대표 펫 설정';});
   };
 
-  function showToast(msg) {
-    var t = document.createElement('div');
-    t.className = 'toast';
-    t.textContent = msg;
-    document.body.appendChild(t);
-    setTimeout(function() { t.remove(); }, 2200);
-  }
+  window.downloadCard=function(emoji,name,rarityLabel,color,breed,personality){
+    var W=400,H=520;
+    var c=document.createElement('canvas');c.width=W;c.height=H;var ctx=c.getContext('2d');
+    // BG gradient
+    var grd=ctx.createLinearGradient(0,0,W,H);grd.addColorStop(0,'#fff1f2');grd.addColorStop(1,color+'22');
+    ctx.fillStyle=grd;ctx.fillRect(0,0,W,H);
+    // Border
+    ctx.strokeStyle=color;ctx.lineWidth=4;ctx.strokeRect(2,2,W-4,H-4);
+    // Top bar
+    ctx.fillStyle=color+'18';ctx.fillRect(0,0,W,180);
+    // Emoji circle
+    ctx.beginPath();ctx.arc(W/2,100,55,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=3;ctx.stroke();
+    ctx.font='48px serif';ctx.textAlign='center';ctx.fillText(emoji,W/2,118);
+    // Name
+    ctx.font='bold 22px "Noto Sans KR",sans-serif';ctx.fillStyle='#1f2937';ctx.fillText(name,W/2,230);
+    // Rarity badge
+    ctx.fillStyle=color;var tw=ctx.measureText(rarityLabel).width;
+    var rx=W/2-tw/2-16,ry=250;
+    ctx.beginPath();ctx.roundRect(rx,ry,tw+32,30,15);ctx.fill();
+    ctx.font='bold 14px "Noto Sans KR",sans-serif';ctx.fillStyle='#fff';ctx.fillText(rarityLabel,W/2,271);
+    // Breed
+    ctx.font='14px "Noto Sans KR",sans-serif';ctx.fillStyle='#6b7280';ctx.fillText(breed,W/2,310);
+    // Personality
+    if(personality&&personality.trim()){ctx.font='13px "Noto Sans KR",sans-serif';ctx.fillStyle='#a855f7';ctx.fillText(personality.trim(),W/2,340);}
+    // Divider
+    ctx.strokeStyle='#e5e7eb';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(50,380);ctx.lineTo(W-50,380);ctx.stroke();
+    // Watermark
+    ctx.font='bold 20px "Noto Sans KR",sans-serif';ctx.fillStyle='#d1d5db';ctx.fillText('♥ Lovesta',W/2,420);
+    ctx.font='12px sans-serif';ctx.fillStyle='#d1d5db';ctx.fillText('lovesta.app',W/2,445);
+    // Download
+    c.toBlob(function(blob){
+      var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='pet_'+name+'.png';a.click();URL.revokeObjectURL(a.href);
+    },'image/png');
+  };
+
+  function showToast(msg){var t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove()},2200);}
 })();
 </script>
 {% endblock %}

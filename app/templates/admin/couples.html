@@ -38,38 +38,38 @@
         </div>
       </div>
 
-      <!-- 멤버 목록 -->
+      <!-- 멤버 목록 + 커플 통합 리롤권 -->
       <div class="bg-gray-50 rounded-xl p-3 mb-3">
-        <p class="text-xs text-gray-400 font-semibold mb-2">
-          멤버 ({{ couple.members.count() }}/{{ couple.max_members or 2 }})
-        </p>
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs text-gray-400 font-semibold">
+            멤버 ({{ couple.members.count() }}/{{ couple.max_members or 2 }})
+          </p>
+          <div class="flex items-center gap-1.5">
+            <span class="text-xs text-amber-500 font-bold">🎟️ 커플 리롤권: {{ couple.reroll_tickets or 0 }}장</span>
+          </div>
+        </div>
         <div class="space-y-1.5">
           {% for m in couple.members.all() %}
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <div class="w-6 h-6 rounded-full bg-rose-100 flex items-center justify-center text-rose-500 font-semibold text-xs">
-                {{ m.username[0].upper() }}
-              </div>
-              <span class="text-sm text-gray-700 font-medium">{{ m.username }}</span>
-              <span class="text-xs text-gray-400">{{ m.email }}</span>
-              {% if m.is_admin %}
-              <span class="text-xs bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded-full">관리자</span>
-              {% endif %}
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-full bg-rose-100 flex items-center justify-center text-rose-500 font-semibold text-xs">
+              {{ m.username[0].upper() }}
             </div>
-            <div class="flex items-center gap-2">
-              <span class="text-xs text-amber-500 font-medium">🎫 {{ m.reroll_tickets or 0 }}</span>
-              <!-- 리롤권 지급 -->
-              <form method="POST" action="{{ url_for('admin.grant_tickets', user_id=m.id) }}" class="flex items-center gap-1">
-                <input type="number" name="amount" value="1" min="1" max="100"
-                       class="w-12 border border-gray-200 rounded-lg px-1.5 py-0.5 text-xs text-center focus:outline-none focus:border-amber-300" />
-                <button type="submit" class="text-xs bg-amber-50 text-amber-600 border border-amber-200 px-2 py-0.5 rounded-lg hover:bg-amber-100 transition font-medium">
-                  지급
-                </button>
-              </form>
-            </div>
+            <span class="text-sm text-gray-700 font-medium">{{ m.username }}</span>
+            <span class="text-xs text-gray-400">{{ m.email }}</span>
+            {% if m.is_admin %}
+            <span class="text-xs bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded-full">관리자</span>
+            {% endif %}
           </div>
           {% endfor %}
         </div>
+        <!-- 커플에 리롤권 지급 -->
+        <form method="POST" action="{{ url_for('admin.grant_tickets', couple_id=couple.id) }}" class="flex items-center gap-2 mt-2 pt-2 border-t border-gray-200">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+          <span class="text-xs text-amber-600 font-semibold">리롤권 지급:</span>
+          <input type="number" name="amount" value="10" min="1" max="100"
+                 class="w-14 border border-amber-200 rounded-lg px-2 py-1 text-xs text-center focus:outline-none focus:border-amber-400 bg-white" />
+          <button type="submit" class="text-xs bg-amber-500 text-white px-3 py-1 rounded-lg hover:bg-amber-600 transition font-medium">지급</button>
+        </form>
       </div>
 
       <!-- 활성 펫 정보 -->
@@ -96,6 +96,7 @@
         <!-- 인원 제한 변경 -->
         <form method="POST" action="{{ url_for('admin.set_couple_limit', couple_id=couple.id) }}"
               class="flex items-center gap-2 bg-blue-50 rounded-xl px-3 py-2">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <span class="text-xs text-blue-500 font-semibold whitespace-nowrap">인원 제한:</span>
           <input type="number" name="max_members" value="{{ couple.max_members or 2 }}" min="2" max="10"
                  class="w-14 border border-blue-200 rounded-lg px-2 py-1 text-xs text-center focus:outline-none focus:border-blue-400 bg-white" />
@@ -107,6 +108,7 @@
         <!-- 희귀도 강제 지급 -->
         <form method="POST" action="{{ url_for('admin.force_pet', couple_id=couple.id) }}"
               class="flex items-center gap-1 bg-purple-50 rounded-xl px-3 py-2">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <span class="text-xs text-purple-500 font-semibold whitespace-nowrap">펫 지급:</span>
           <select name="rarity" class="text-xs border border-purple-200 rounded-lg px-1.5 py-1 bg-white focus:outline-none focus:border-purple-400">
             <option value="common">커먼</option>
@@ -114,7 +116,7 @@
             <option value="rare" selected>레어</option>
             <option value="epic">에픽</option>
             <option value="legendary">레전더리</option>
-            <option value="mythic">미식</option>
+            <option value="mythic">신화</option>
           </select>
           <select name="breed" class="text-xs border border-purple-200 rounded-lg px-1.5 py-1 bg-white focus:outline-none focus:border-purple-400">
             <option value="">랜덤</option>

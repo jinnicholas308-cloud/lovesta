@@ -145,6 +145,7 @@
   <div class="bg-white rounded-2xl shadow-sm border border-rose-50 p-5 slide-up" style="animation-delay:.13s">
     <h2 class="font-bold text-gray-500 text-xs uppercase tracking-widest mb-4">커플 설정 ✏️</h2>
     <form method="POST" class="space-y-3">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       <input type="hidden" name="action" value="update_anniversary" />
 
       <div>

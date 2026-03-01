@@ -80,6 +80,11 @@
       <p class="font-semibold text-gray-700 group-hover:text-rose-500 transition">💑 커플 관리</p>
       <p class="text-xs text-gray-400 mt-1">인원 증설·펫 지급</p>
     </a>
+    <a href="{{ url_for('admin.pet_list') }}"
+       class="bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-md hover:border-rose-200 transition block group">
+      <p class="font-semibold text-gray-700 group-hover:text-rose-500 transition">🐾 펫 관리</p>
+      <p class="text-xs text-gray-400 mt-1">수정·삭제·조회</p>
+    </a>
     <a href="{{ url_for('admin.inquiry_list') }}"
        class="bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-md hover:border-rose-200 transition block group relative">
       <p class="font-semibold text-gray-700 group-hover:text-rose-500 transition">📨 문의 관리</p>

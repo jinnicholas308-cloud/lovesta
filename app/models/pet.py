@@ -12,7 +12,7 @@ RARITIES = {
     'rare':      {'label': '레어',     'prob': 0.15,  'color': '#3b82f6', 'bg': 'bg-blue-50',     'text': 'text-blue-500',    'border': 'border-blue-400',   'glow': 'shadow-blue-200'},
     'epic':      {'label': '에픽',     'prob': 0.07,  'color': '#a855f7', 'bg': 'bg-purple-50',   'text': 'text-purple-500',  'border': 'border-purple-400', 'glow': 'shadow-purple-200'},
     'legendary': {'label': '레전더리', 'prob': 0.025, 'color': '#f59e0b', 'bg': 'bg-amber-50',    'text': 'text-amber-500',   'border': 'border-amber-400',  'glow': 'shadow-amber-300'},
-    'mythic':    {'label': '미식',     'prob': 0.005, 'color': '#f43f5e', 'bg': 'bg-rose-50',     'text': 'text-rose-500',    'border': 'border-rose-400',   'glow': 'shadow-rose-400'},
+    'mythic':    {'label': '신화',     'prob': 0.005, 'color': '#f43f5e', 'bg': 'bg-rose-50',     'text': 'text-rose-500',    'border': 'border-rose-400',   'glow': 'shadow-rose-400'},
 }
 
 RARITY_ORDER = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic']

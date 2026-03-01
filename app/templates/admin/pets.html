@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% block title %}펫 관리{% endblock %}
+
+{% block content %}
+<div class="space-y-4">
+  <div class="flex items-center gap-4 flex-wrap">
+    <a href="{{ url_for('admin.dashboard') }}" class="text-sm text-gray-400 hover:text-rose-500">← 대시보드</a>
+    <h1 class="text-xl font-bold text-gray-800">🐾 펫 관리</h1>
+    <span class="text-sm text-gray-400 ml-auto">총 {{ pets.total }}마리</span>
+  </div>
+
+  <!-- 검색 -->
+  <form method="GET" class="flex gap-2">
+    <input type="text" name="q" value="{{ search }}" placeholder="이름 / 종 / 희귀도 검색..."
+           class="flex-1 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition" />
+    <button type="submit" class="bg-rose-500 hover:bg-rose-600 text-white text-sm font-medium px-4 py-2 rounded-xl transition shrink-0">검색</button>
+    {% if search %}
+    <a href="{{ url_for('admin.pet_list') }}" class="border border-gray-200 hover:border-rose-300 text-gray-500 text-sm px-3 py-2 rounded-xl transition shrink-0">초기화</a>
+    {% endif %}
+  </form>
+
+  <!-- 펫 카드 리스트 -->
+  <div class="space-y-4">
+    {% for pet in pets.items %}
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+      <!-- 헤더 -->
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-3">
+          <span class="text-3xl">{{ pet.breed_info.emoji }}</span>
+          <div>
+            <p class="font-bold text-gray-800">{{ pet.display_name }}</p>
+            <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+              <span class="text-xs font-bold px-2 py-0.5 rounded-full"
+                    style="color: {{ pet.rarity_info.color }}; background: {{ pet.rarity_info.color }}15;">
+                {{ pet.rarity_info.label }}
+              </span>
+              {% if pet.personality %}
+              <span class="text-xs text-gray-500">{{ pet.personality }} {{ pet.personality_label }}</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="text-right">
+          <p class="text-xs text-gray-400">ID: {{ pet.id }}</p>
+          <p class="text-xs text-gray-400">{{ pet.created_at.strftime('%Y.%m.%d %H:%M') }}</p>
+        </div>
+      </div>
+
+      <!-- 상세 정보 -->
+      <div class="bg-gray-50 rounded-xl p-3 mb-3">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+          <div>
+            <span class="text-gray-400">종:</span>
+            <span class="text-gray-700 font-medium">{{ pet.breed_info.emoji }} {{ pet.breed_info.name }} ({{ pet.breed }})</span>
+          </div>
+          <div>
+            <span class="text-gray-400">커플 ID:</span>
+            <span class="text-gray-700 font-medium">{{ pet.couple_id }}</span>
+          </div>
+          <div>
+            <span class="text-gray-400">희귀도:</span>
+            <span class="font-medium" style="color: {{ pet.rarity_info.color }};">{{ pet.rarity }}</span>
+          </div>
+          <div>
+            <span class="text-gray-400">상태:</span>
+            {% if pet.is_active %}
+            <span class="bg-green-50 text-green-600 text-xs px-2 py-0.5 rounded-full border border-green-200">활성</span>
+            {% else %}
+            <span class="bg-gray-50 text-gray-400 text-xs px-2 py-0.5 rounded-full border border-gray-200">비활성</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- 관리 버튼 -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <button type="button" onclick="toggleEditForm({{ pet.id }})"
+                class="text-xs text-blue-500 hover:text-blue-600 transition underline">수정</button>
+        <form method="POST" action="{{ url_for('admin.delete_pet', pet_id=pet.id) }}"
+              onsubmit="return confirm('⚠️ 펫 #{{ pet.id }} {{ pet.display_name }}을(를) 삭제할까요? 되돌릴 수 없습니다.')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+          <button type="submit" class="text-xs text-red-300 hover:text-red-500 transition underline">삭제</button>
+        </form>
+      </div>
+
+      <!-- 수정 폼 (토글) -->
+      <div id="edit-form-{{ pet.id }}" class="hidden mt-3">
+        <form method="POST" action="{{ url_for('admin.edit_pet', pet_id=pet.id) }}"
+              class="bg-blue-50 rounded-xl p-4 space-y-3">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+          <p class="text-xs font-semibold text-blue-500 mb-2">펫 #{{ pet.id }} 수정</p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <!-- 이름 -->
+            <div>
+              <label class="text-xs text-gray-500 block mb-1">이름</label>
+              <input type="text" name="name" value="{{ pet.name or '' }}" maxlength="50" placeholder="이름 입력 (최대 50자)"
+                     class="w-full border border-blue-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-blue-400 transition" />
+            </div>
+
+            <!-- 희귀도 -->
+            <div>
+              <label class="text-xs text-gray-500 block mb-1">희귀도</label>
+              <select name="rarity"
+                      class="w-full border border-blue-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-blue-400 transition">
+                {% for r in rarity_order %}
+                <option value="{{ r }}" {% if pet.rarity == r %}selected{% endif %}>{{ rarities[r].label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- 종 -->
+            <div>
+              <label class="text-xs text-gray-500 block mb-1">종</label>
+              <select name="breed"
+                      class="w-full border border-blue-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-blue-400 transition">
+                {% for bk, bv in breeds.items() %}
+                <option value="{{ bk }}" {% if pet.breed == bk %}selected{% endif %}>{{ bv.emoji }} {{ bv.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- 성격(MBTI) -->
+            <div>
+              <label class="text-xs text-gray-500 block mb-1">성격 (MBTI)</label>
+              <select name="personality"
+                      class="w-full border border-blue-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-blue-400 transition">
+                {% for m in mbti_list %}
+                <option value="{{ m }}" {% if pet.personality == m %}selected{% endif %}>{{ m }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 pt-1">
+            <button type="submit"
+                    class="bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium px-4 py-1.5 rounded-lg transition">저장</button>
+            <button type="button" onclick="toggleEditForm({{ pet.id }})"
+                    class="text-gray-400 hover:text-gray-500 text-xs px-3 py-1.5 transition">취소</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+
+    {% if not pets.items %}
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 text-center text-gray-400">
+      펫이 없습니다.
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- 페이지네이션 -->
+  {% if pets.pages > 1 %}
+  <div class="flex justify-center gap-2">
+    {% if pets.has_prev %}
+    <a href="{{ url_for('admin.pet_list', page=pets.prev_num, q=search) }}"
+       class="px-3 py-1.5 text-sm bg-white border rounded-lg hover:border-rose-300 transition">이전</a>
+    {% endif %}
+    <span class="px-3 py-1.5 text-sm text-gray-500">{{ pets.page }}/{{ pets.pages }}</span>
+    {% if pets.has_next %}
+    <a href="{{ url_for('admin.pet_list', page=pets.next_num, q=search) }}"
+       class="px-3 py-1.5 text-sm bg-white border rounded-lg hover:border-rose-300 transition">다음</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<script>
+function toggleEditForm(petId) {
+  const form = document.getElementById('edit-form-' + petId);
+  form.classList.toggle('hidden');
+  if (!form.classList.contains('hidden')) {
+    form.querySelector('input[name=name]').focus();
+  }
+}
+</script>
+{% endblock %}

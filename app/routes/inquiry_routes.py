@@ -1,5 +1,6 @@
 """
 Inquiry routes: user submits Q&A, views own inquiries.
+보안: 입력 길이 제한, 카테고리 화이트리스트, 레이트 리밋.
 """
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
@@ -7,6 +8,7 @@ from app.extensions import db
 from app.models import Inquiry
 from app.models.inquiry import INQUIRY_CATEGORIES
 from app.utils.email import send_inquiry_notification
+from app.utils.security import rate_limit
 
 inquiry_bp = Blueprint('inquiry', __name__, url_prefix='/inquiry')
 
@@ -22,17 +24,19 @@ def list_inquiries():
 
 @inquiry_bp.route('/new', methods=['GET', 'POST'])
 @login_required
+@rate_limit(max_requests=5, window=60, scope='inquiry_new')
 def new_inquiry():
     """새 문의 작성."""
     if request.method == 'POST':
         category = request.form.get('category', 'general')
-        subject = request.form.get('subject', '').strip()
-        body = request.form.get('body', '').strip()
+        subject = request.form.get('subject', '').strip()[:200]     # 제목 200자 제한
+        body = request.form.get('body', '').strip()[:5000]          # 본문 5000자 제한
 
         if not subject or not body:
             flash('제목과 내용을 모두 입력해주세요.', 'error')
             return render_template('inquiry/new.html', categories=INQUIRY_CATEGORIES)
 
+        # 카테고리 화이트리스트 검증
         if category not in INQUIRY_CATEGORIES:
             category = 'general'
 
@@ -46,7 +50,6 @@ def new_inquiry():
         db.session.add(inquiry)
         db.session.commit()
 
-        # 어드민에게 이메일 발송
         send_inquiry_notification(inquiry)
 
         flash('문의가 접수되었습니다! 빠르게 답변 드릴게요 💕', 'success')

@@ -15,6 +15,7 @@
       <div class="bg-white rounded-2xl shadow-sm border border-rose-100 p-6">
         <h2 class="font-semibold text-gray-800 mb-4">✨ 새로 만들기</h2>
         <form method="POST" class="space-y-3">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <input type="hidden" name="action" value="create" />
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">커플 이름 <span class="text-gray-400">(선택)</span></label>
@@ -38,6 +39,7 @@
       <div class="bg-white rounded-2xl shadow-sm border border-pink-100 p-6">
         <h2 class="font-semibold text-gray-800 mb-4">🔗 코드로 참여</h2>
         <form method="POST" class="space-y-3">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <input type="hidden" name="action" value="join" />
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">파트너의 커플 코드</label>
