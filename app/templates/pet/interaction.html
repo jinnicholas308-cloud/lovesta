@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}미니게임{% endblock %}
+
+{% block content %}
+<style>
+  .tap-target{width:80px;height:80px;border-radius:50%;position:absolute;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;font-size:2rem;
+    transition:transform .1s;user-select:none;box-shadow:0 4px 20px rgba(244,63,94,.25);}
+  .tap-target:active{transform:scale(0.85);}
+  @keyframes popPoof{0%{transform:scale(1);opacity:1;}100%{transform:scale(2);opacity:0;}}
+  .poof{animation:popPoof .4s ease-out forwards;pointer-events:none;}
+  .game-area{position:relative;width:100%;height:360px;border-radius:1.5rem;overflow:hidden;
+    background:linear-gradient(135deg,#fff1f2,#fce7f3,#fff1f2);border:2px solid #fecdd3;}
+</style>
+
+<div class="max-w-md mx-auto space-y-5">
+
+  <div class="text-center slide-up">
+    <h1 class="text-xl font-black gradient-text">🎮 미니게임</h1>
+    <p class="text-sm text-gray-400 mt-1">하트를 20개 터뜨려서 리롤권 2장을 받으세요!</p>
+  </div>
+
+  <div class="glass rounded-2xl p-4 text-center slide-up" style="animation-delay:.05s">
+    <div class="flex items-center justify-center gap-4">
+      <div><span class="text-sm text-gray-400">점수</span><p id="score" class="text-2xl font-black text-rose-500">0</p></div>
+      <div class="w-px h-10 bg-gray-200"></div>
+      <div><span class="text-sm text-gray-400">목표</span><p class="text-2xl font-black text-gray-300">20</p></div>
+      <div class="w-px h-10 bg-gray-200"></div>
+      <div><span class="text-sm text-gray-400">남은 시간</span><p id="timer" class="text-2xl font-black text-amber-500">15</p></div>
+    </div>
+  </div>
+
+  <div id="game-area" class="game-area slide-up" style="animation-delay:.1s">
+    <div id="game-msg" class="absolute inset-0 flex flex-col items-center justify-center z-10">
+      <button id="start-btn" onclick="startGame()"
+              class="gradient-rose text-white font-black text-lg px-10 py-4 rounded-2xl shadow-lg
+                     hover:opacity-90 active:scale-95 transition-all">🎮 게임 시작!</button>
+    </div>
+  </div>
+
+  <div id="result-area" class="hidden text-center space-y-3 slide-up">
+    <div id="result-msg" class="glass rounded-2xl p-6">
+      <p id="result-text" class="text-lg font-black text-gray-800"></p>
+      <p id="result-sub" class="text-sm text-gray-400 mt-1"></p>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="location.reload()" class="flex-1 border-2 border-rose-200 text-rose-500 font-bold py-2.5 rounded-xl hover:bg-rose-50 transition text-sm">다시하기</button>
+      <a href="{{ url_for('pet.collection') }}" class="flex-1 text-center gradient-rose text-white font-bold py-2.5 rounded-xl hover:opacity-90 transition text-sm">컬렉션 →</a>
+    </div>
+  </div>
+
+  <a href="{{ url_for('pet.collection') }}" class="block text-center text-sm text-gray-400 hover:text-rose-500 transition-colors py-2">← 컬렉션으로 돌아가기</a>
+</div>
+
+<script>
+var score=0,goal=20,timeLeft=15,gameTimer=null,spawnTimer=null,running=false;
+var emojis=['💖','💕','❤️','🩷','💗','💝','🌸','✨'];
+var area=document.getElementById('game-area');
+var scoreEl=document.getElementById('score');
+var timerEl=document.getElementById('timer');
+
+function startGame(){
+  document.getElementById('game-msg').classList.add('hidden');
+  score=0;timeLeft=15;running=true;
+  scoreEl.textContent='0';timerEl.textContent='15';
+  gameTimer=setInterval(function(){timeLeft--;timerEl.textContent=timeLeft;if(timeLeft<=0)endGame();},1000);
+  spawnTimer=setInterval(spawnTarget,600);
+  spawnTarget();spawnTarget();
+}
+
+function spawnTarget(){
+  if(!running)return;
+  var t=document.createElement('div');t.className='tap-target';
+  t.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+  var maxX=area.clientWidth-90,maxY=area.clientHeight-90;
+  t.style.left=Math.max(5,Math.random()*maxX)+'px';
+  t.style.top=Math.max(5,Math.random()*maxY)+'px';
+  t.style.background='rgba(255,255,255,0.9)';t.style.border='3px solid #fecdd3';
+  t.onclick=function(){if(!running)return;score++;scoreEl.textContent=score;
+    t.classList.add('poof');setTimeout(function(){t.remove()},400);
+    if(score>=goal)endGame();};
+  area.appendChild(t);
+  setTimeout(function(){if(t.parentNode&&!t.classList.contains('poof'))t.remove()},2200);
+}
+
+function endGame(){
+  running=false;clearInterval(gameTimer);clearInterval(spawnTimer);
+  area.querySelectorAll('.tap-target').forEach(function(e){e.remove()});
+  document.getElementById('result-area').classList.remove('hidden');
+  var rt=document.getElementById('result-text'),rs=document.getElementById('result-sub');
+  if(score>=goal){
+    rt.textContent='🎉 성공! '+score+'개 터뜨렸어요!';rs.textContent='리롤권 2장을 받는 중...';
+    var csrfToken=document.querySelector('meta[name="csrf-token"]').content;
+    fetch('/pet/interaction-bonus',{method:'POST',headers:{'X-CSRFToken':csrfToken}}).then(function(r){return r.json()}).then(function(d){
+      if(d.success)rs.textContent='✅ '+d.message;else rs.textContent=d.message;
+    }).catch(function(){rs.textContent='보상 수령 중 오류';});
+  }else{rt.textContent='😢 시간 초과! '+score+'/'+goal;rs.textContent='다시 도전해보세요!';}
+}
+</script>
+{% endblock %}

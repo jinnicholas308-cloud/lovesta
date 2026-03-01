@@ -26,6 +26,56 @@
      data-i18n="feed.add">+ 추억 추가</a>
 </div>
 
+<!-- ── 출석 스트릭 ── -->
+{% if couple %}
+<div class="glass rounded-2xl p-4 mb-5 slide-up" style="animation-delay:.05s">
+  <div class="flex items-center justify-between mb-3">
+    <div class="flex items-center gap-2">
+      <span class="text-sm font-bold text-gray-500">📅 출석</span>
+      <span class="text-xs text-gray-400">🎟️ <span id="feed-tickets" class="font-black text-rose-500">-</span>장</span>
+    </div>
+    <button id="feed-checkin-btn"
+            class="gradient-rose text-white text-[11px] font-bold px-3 py-1 rounded-full
+                   shadow-sm hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+      출석 체크
+    </button>
+  </div>
+  <div id="feed-week" class="flex items-center justify-between">
+    {% for d in ['월','화','수','목','금','토','일'] %}
+    <div class="flex flex-col items-center gap-1">
+      <div id="fw-{{ loop.index0 }}" class="w-7 h-7 rounded-full border-2 border-gray-200 bg-white flex items-center justify-center text-[10px] font-bold text-gray-300">·</div>
+      <span class="text-[9px] text-gray-400">{{ d }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+<script>
+(function(){
+  var cb=document.getElementById('feed-checkin-btn');
+  fetch('/attendance/status').then(function(r){return r.json()}).then(function(d){
+    document.getElementById('feed-tickets').textContent=d.total_tickets||0;
+    if(d.checked_today){cb.disabled=true;cb.textContent='완료 ✅';}
+    if(d.week_progress&&d.week_progress.days){
+      d.week_progress.days.forEach(function(day,i){
+        var el=document.getElementById('fw-'+i);if(!el)return;
+        if(day.checked){el.className='w-7 h-7 rounded-full border-2 border-rose-400 bg-rose-50 flex items-center justify-center text-[10px] font-bold text-rose-500';el.textContent='✓';}
+        else if(day.is_today){el.classList.remove('border-gray-200','text-gray-300');el.classList.add('border-rose-300','text-rose-300');}
+        else if(day.is_future){el.classList.add('opacity-40');}
+      });
+    }
+  }).catch(function(){});
+  cb.addEventListener('click',function(){
+    cb.disabled=true;cb.textContent='...';
+    var csrfToken=document.querySelector('meta[name="csrf-token"]').content;
+    fetch('/attendance/check-in',{method:'POST',headers:{'X-CSRFToken':csrfToken}}).then(function(r){return r.json()}).then(function(d){
+      if(d.success){cb.textContent='완료 ✅';document.getElementById('feed-tickets').textContent=d.total_tickets;location.reload();}
+      else{cb.textContent=d.message;}
+    }).catch(function(){cb.disabled=false;cb.textContent='출석 체크';});
+  });
+})();
+</script>
+{% endif %}
+
 {% if memories.items %}
 <!-- ── 추억 그리드 ── -->
 <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4">

@@ -96,6 +96,7 @@
               action="{{ url_for('memories.delete', memory_id=memory.id) }}"
               class="ml-auto"
               onsubmit="return confirm('정말 삭제할까요?')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <button type="submit" class="text-xs text-gray-300 hover:text-red-400 transition">
             삭제
           </button>
@@ -128,6 +129,7 @@
         <form method="POST"
               action="{{ url_for('comments.delete_comment', memory_id=memory.id, comment_id=comment.id) }}"
               class="shrink-0 opacity-0 group-hover:opacity-100 transition">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <button type="submit" class="text-xs text-gray-300 hover:text-red-400 transition">✕</button>
         </form>
         {% endif %}
@@ -141,6 +143,7 @@
     <!-- Add comment form -->
     <form method="POST" action="{{ url_for('comments.add_comment', memory_id=memory.id) }}"
           class="flex gap-2">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       <input type="text" name="content" required maxlength="500"
              class="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition"
              placeholder="댓글을 입력하세요..." />
@@ -156,7 +159,11 @@
 <script>
 document.getElementById('likeBtn').addEventListener('click', async function() {
   const memoryId = this.dataset.memoryId;
-  const res = await fetch(`/memory/${memoryId}/like`, { method: 'POST' });
+  const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+  const res = await fetch(`/memory/${memoryId}/like`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': csrfToken }
+  });
   const data = await res.json();
   document.getElementById('likeIcon').textContent = data.liked ? '♥' : '♡';
   document.getElementById('likeCount').textContent = data.count;

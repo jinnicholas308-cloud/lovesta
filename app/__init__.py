@@ -1,7 +1,10 @@
 import os
-from flask import Flask
+from flask import Flask, request, session
+from flask_wtf.csrf import CSRFProtect
 from app.config import config_map
 from app.extensions import db, login_manager
+
+csrf = CSRFProtect()
 
 
 def create_app(env: str = None):
@@ -15,9 +18,11 @@ def create_app(env: str = None):
     # Extensions
     db.init_app(app)
     login_manager.init_app(app)
+    csrf.init_app(app)                           # CSRF 전역 보호
     login_manager.login_view = 'auth.login'
     login_manager.login_message = '로그인이 필요합니다.'
     login_manager.login_message_category = 'warning'
+    login_manager.session_protection = 'strong'  # 세션 하이재킹 감지
 
     # User loader
     from app.models import User
@@ -28,6 +33,14 @@ def create_app(env: str = None):
             return User.query.get(int(user_id))
         except Exception:
             return None
+
+    # ── 보안 미들웨어 ──
+    from app.utils.security import apply_security_headers
+    app.after_request(apply_security_headers)
+
+    @app.before_request
+    def _enforce_session_permanent():
+        session.permanent = True
 
     # Blueprints
     from app.routes.auth_routes import auth_bp
@@ -59,10 +72,33 @@ def create_app(env: str = None):
             db.create_all()
         except Exception as e:
             app.logger.warning(f'[DB] create_all 실패: {e}')
+        _ensure_extra_tables(app)
         _run_migrations(app)
         _ensure_admin(app)
 
     return app
+
+
+def _ensure_extra_tables(app):
+    """인터랙션 로그 등 추가 테이블 생성."""
+    from sqlalchemy import text, inspect
+    inspector = inspect(db.engine)
+    existing = inspector.get_table_names()
+    if 'interaction_logs' not in existing:
+        try:
+            db.session.execute(text(
+                'CREATE TABLE interaction_logs ('
+                '  id INTEGER PRIMARY KEY,'
+                '  user_id INTEGER NOT NULL,'
+                '  date DATE NOT NULL,'
+                '  UNIQUE(user_id, date)'
+                ')'
+            ))
+            db.session.commit()
+            app.logger.info('[Migration] interaction_logs 테이블 생성 완료')
+        except Exception as e:
+            db.session.rollback()
+            app.logger.warning(f'[Migration] interaction_logs 생성 실패: {e}')
 
 
 def _run_migrations(app):
@@ -83,6 +119,7 @@ def _run_migrations(app):
         ('couples',  'pet_name',        'VARCHAR(50)'),
         ('couples',  'max_members',     'INTEGER DEFAULT 2 NOT NULL'),
         ('couples',  'pity_counter',    'INTEGER DEFAULT 0 NOT NULL'),
+        ('couples',  'reroll_tickets',  'INTEGER DEFAULT 1 NOT NULL'),
         ('memories', 'media_type',      "VARCHAR(10) DEFAULT 'image' NOT NULL"),
     ]
 

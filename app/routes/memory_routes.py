@@ -1,6 +1,8 @@
 """
 Memory routes: feed, upload, detail, delete, like toggle.
 Comment routes are separated in comment_routes.py.
+
+보안: 입력 길이 제한, 파일 확장자 검증, couple 권한 검증, 경로 탐색 방지.
 """
 import os
 from datetime import datetime
@@ -11,6 +13,7 @@ from app.extensions import db
 from app.models import Memory, Like, Couple, Comment
 from app.utils.file_handler import save_image, delete_image, save_video, delete_video
 from app.utils.validators import is_allowed_image, is_allowed_video
+from app.utils.security import rate_limit
 
 memories_bp = Blueprint('memories', __name__)
 
@@ -29,6 +32,9 @@ def feed():
         return redirect(url_for('couple.setup'))
 
     page = request.args.get('page', 1, type=int)
+    # 페이지 범위 제한 (비정상 요청 방지)
+    page = max(1, min(page, 10000))
+
     memories = (Memory.query
                 .filter_by(couple_id=current_user.couple_id)
                 .order_by(Memory.created_at.desc())
@@ -40,14 +46,15 @@ def feed():
 
 @memories_bp.route('/upload', methods=['GET', 'POST'])
 @login_required
+@rate_limit(max_requests=10, window=60, scope='memory_upload')
 def upload():
     if not current_user.couple_id:
         return redirect(url_for('couple.setup'))
 
     if request.method == 'POST':
-        caption = request.form.get('caption', '').strip()
-        location = request.form.get('location', '').strip()
-        memory_date_str = request.form.get('memory_date', '')
+        caption = request.form.get('caption', '').strip()[:500]         # 캡션 500자 제한
+        location = request.form.get('location', '').strip()[:200]       # 위치 200자 제한
+        memory_date_str = request.form.get('memory_date', '').strip()[:10]
         file = request.files.get('media')
 
         if not caption:
@@ -58,14 +65,16 @@ def upload():
         media_type = 'image'
 
         if file and file.filename:
-            if is_allowed_image(file.filename):
+            # 파일명에서 경로 탐색 문자 제거
+            safe_name = os.path.basename(file.filename)
+            if is_allowed_image(safe_name):
                 try:
                     media_filename = save_image(file)
                     media_type = 'image'
                 except ValueError as e:
                     flash(str(e), 'error')
                     return render_template('memories/upload.html')
-            elif is_allowed_video(file.filename):
+            elif is_allowed_video(safe_name):
                 try:
                     media_filename = save_video(file)
                     media_type = 'video'
@@ -122,7 +131,6 @@ def delete(memory_id):
         flash('삭제 권한이 없습니다.', 'error')
         return redirect(url_for('memories.feed'))
 
-    # media_type에 따라 적절한 삭제 함수 호출
     mt = getattr(memory, 'media_type', 'image') or 'image'
     if mt == 'video':
         delete_video(memory.image_path)
@@ -137,6 +145,7 @@ def delete(memory_id):
 
 @memories_bp.route('/memory/<int:memory_id>/like', methods=['POST'])
 @login_required
+@rate_limit(max_requests=30, window=60, scope='memory_like')
 def toggle_like(memory_id):
     memory = Memory.query.get_or_404(memory_id)
     if not current_user.couple_id or memory.couple_id != current_user.couple_id:
@@ -156,5 +165,11 @@ def toggle_like(memory_id):
 
 @memories_bp.route('/uploads/<filename>')
 def uploaded_file(filename):
+    """정적 파일 서빙 — 경로 탐색(directory traversal) 방지."""
+    # 파일명에 / 또는 .. 포함 시 차단
+    safe_name = os.path.basename(filename)
+    if safe_name != filename or '..' in filename:
+        return jsonify({'error': 'Invalid filename'}), 400
+
     upload_folder = os.path.abspath(current_app.config['UPLOAD_FOLDER'])
-    return send_from_directory(upload_folder, filename)
+    return send_from_directory(upload_folder, safe_name)

@@ -11,8 +11,9 @@ class Couple(db.Model):
     couple_name  = db.Column(db.String(100), nullable=True)
     created_at   = db.Column(db.DateTime, default=datetime.utcnow)
     pet_name     = db.Column(db.String(50), nullable=True)
-    max_members  = db.Column(db.Integer, default=2, nullable=False)
-    pity_counter = db.Column(db.Integer, default=0, nullable=False)
+    max_members    = db.Column(db.Integer, default=2, nullable=False)
+    pity_counter   = db.Column(db.Integer, default=0, nullable=False)
+    reroll_tickets = db.Column(db.Integer, default=1, nullable=False)
 
     members  = db.relationship('User',   backref='couple', lazy='dynamic',
                                 foreign_keys='User.couple_id')

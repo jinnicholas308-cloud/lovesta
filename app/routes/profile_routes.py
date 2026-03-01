@@ -1,16 +1,21 @@
+"""
+Profile routes: view and edit user profile.
+보안: 입력 길이 제한, XSS 방지, MBTI 화이트리스트.
+"""
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from app.extensions import db
 from app.models import User
+from app.utils.security import sanitize_input
 
 profile_bp = Blueprint('profile', __name__, url_prefix='/profile')
 
 MBTI_LIST = [
-    'INTJ','INTP','ENTJ','ENTP',
-    'INFJ','INFP','ENFJ','ENFP',
-    'ISTJ','ISFJ','ESTJ','ESFJ',
-    'ISTP','ISFP','ESTP','ESFP',
+    'INTJ', 'INTP', 'ENTJ', 'ENTP',
+    'INFJ', 'INFP', 'ENFJ', 'ENFP',
+    'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ',
+    'ISTP', 'ISFP', 'ESTP', 'ESFP',
 ]
 
 
@@ -18,12 +23,12 @@ MBTI_LIST = [
 @login_required
 def me():
     if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        bio = request.form.get('bio', '').strip()
-        favorite_food = request.form.get('favorite_food', '').strip()
-        mbti = request.form.get('mbti', '').strip().upper()
+        username = sanitize_input(request.form.get('username', ''), max_length=50)
+        bio = request.form.get('bio', '').strip()[:300]             # 300자 제한
+        favorite_food = sanitize_input(request.form.get('favorite_food', ''), max_length=100)
+        mbti = request.form.get('mbti', '').strip().upper()[:4]
 
-        birthday_str = request.form.get('birthday', '').strip()
+        birthday_str = request.form.get('birthday', '').strip()[:10]
         birthday = None
         if birthday_str:
             try:
@@ -49,9 +54,9 @@ def me():
 
         # 펫 이름 (커플이 있으면)
         if current_user.couple:
-            pet_name = request.form.get('pet_name', '').strip()
+            pet_name = sanitize_input(request.form.get('pet_name', ''), max_length=20)
             if pet_name:
-                current_user.couple.pet_name = pet_name[:20]
+                current_user.couple.pet_name = pet_name
             else:
                 current_user.couple.pet_name = None
 

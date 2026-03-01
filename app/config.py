@@ -30,13 +30,11 @@ def _get_db_url() -> str:
     3. 개별 PGHOST/PGPORT/PGDATABASE/PGUSER/PGPASSWORD 로 직접 구성
     4. SQLite fallback (로컬 개발 / DB 미연결 상태에서도 앱 기동)
     """
-    # 1 & 2. DATABASE_URL / DATABASE_PUBLIC_URL
     for var in ('DATABASE_URL', 'DATABASE_PUBLIC_URL'):
         url = os.getenv(var) or ''
         if url:
             return _fix_db_url(url)
 
-    # 3. 개별 PG* 변수로 PostgreSQL URL 구성
     pg_host = os.getenv('PGHOST') or os.getenv('RAILWAY_PRIVATE_DOMAIN')
     pg_port = os.getenv('PGPORT', '5432')
     pg_db   = os.getenv('PGDATABASE')
@@ -45,7 +43,6 @@ def _get_db_url() -> str:
     if pg_host and pg_db and pg_user:
         return f'postgresql://{pg_user}:{pg_pass}@{pg_host}:{pg_port}/{pg_db}'
 
-    # 4. SQLite fallback (로컬 개발 / DB 미연결 상태에서도 앱 기동 가능)
     return f'sqlite:///{os.path.join(BASE_DIR, "lovesta.db")}'
 
 
@@ -69,6 +66,14 @@ class Config:
     PERMANENT_SESSION_LIFETIME = timedelta(days=30)
     REMEMBER_COOKIE_DURATION = timedelta(days=30)
 
+    # ── 보안 설정 ──
+    SESSION_COOKIE_HTTPONLY = True          # JS에서 쿠키 접근 차단
+    SESSION_COOKIE_SAMESITE = 'Lax'        # CSRF 보호
+    REMEMBER_COOKIE_HTTPONLY = True         # remember me 쿠키 JS 접근 차단
+    REMEMBER_COOKIE_SAMESITE = 'Lax'       # remember me 쿠키 CSRF 보호
+    WTF_CSRF_ENABLED = True                # Flask-WTF CSRF 전역 활성화
+    WTF_CSRF_TIME_LIMIT = 3600             # CSRF 토큰 유효 시간(초)
+
     # Google OAuth
     GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
     GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
@@ -91,6 +96,16 @@ class ProductionConfig(Config):
     SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
+    REMEMBER_COOKIE_SECURE = True          # remember me 쿠키 HTTPS 전용
+    REMEMBER_COOKIE_HTTPONLY = True
+    # 프로덕션에선 SECRET_KEY 반드시 환경변수에서 가져오기
+    @property
+    def SECRET_KEY(self):  # noqa: N802
+        key = os.getenv('SECRET_KEY', '')
+        if not key or key == 'dev-secret-key-change-in-production':
+            import secrets
+            return secrets.token_hex(32)
+        return key
 
 
 config_map = {

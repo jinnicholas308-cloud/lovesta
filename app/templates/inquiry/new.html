@@ -7,6 +7,7 @@
     <h1 class="text-xl font-bold gradient-text mb-6">문의하기</h1>
 
     <form method="POST" class="space-y-5">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
       <!-- Category -->
       <div>
