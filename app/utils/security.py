@@ -80,7 +80,7 @@ def apply_security_headers(response):
     # Referrer 정보 제한
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     # 권한 정책
-    response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
+    response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=(self)'
     # Content Security Policy (Tailwind CDN + Google OAuth + Cloudinary + AdSense + PWA)
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
