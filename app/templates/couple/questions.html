@@ -35,14 +35,18 @@
   {% if not my_answer %}
   <div class="bg-white rounded-2xl shadow-sm border border-rose-50 p-5 slide-up" style="animation-delay:.06s">
     <h3 class="font-bold text-gray-500 text-xs uppercase tracking-widest mb-3">나의 답변 ✍️</h3>
-    <form method="POST" action="{{ url_for('questions.answer') }}">
+    <form method="POST" action="{{ url_for('questions.answer') }}" id="answerForm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       <input type="hidden" name="question_id" value="{{ today_question.id }}" />
-      <textarea name="answer_text" rows="4" maxlength="1000"
+      <textarea name="answer_text" rows="3" maxlength="1000" id="answerText"
                 placeholder="솔직하게 답변해보세요! 상대방이 답변하면 서로 확인할 수 있어요."
                 class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm
                        focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-400
                        transition resize-none" required></textarea>
-      <p class="text-xs text-gray-300 mt-1 mb-3">한 번 제출하면 수정할 수 없으니 신중하게!</p>
+      <div class="flex items-center justify-between mt-1 mb-3">
+        <p class="text-xs text-gray-300">한 번 제출하면 수정할 수 없으니 신중하게!</p>
+        <p class="text-[10px] text-gray-300">Enter 제출 · Shift+Enter 줄바꿈</p>
+      </div>
       <button type="submit"
               class="w-full gradient-rose text-white font-bold py-3 rounded-xl
                      hover:opacity-90 active:scale-95 transition-all shadow-sm">
@@ -130,6 +134,7 @@
     <h3 class="font-bold text-gray-500 text-xs uppercase tracking-widest mb-3">질문 직접 만들기 ✨</h3>
     <p class="text-xs text-gray-400 mb-3">내일(또는 원하는 날짜)에 나올 질문을 직접 만들어보세요!</p>
     <form method="POST" action="{{ url_for('questions.create_custom') }}" class="space-y-3">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       <textarea name="question_text" rows="2" maxlength="500"
                 placeholder="예: 우리가 처음 키스한 순간을 기억해?"
                 class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm
@@ -154,6 +159,7 @@
   <div class="bg-white rounded-2xl shadow-sm border border-rose-50 p-5 slide-up" style="animation-delay:.14s">
     <h3 class="font-bold text-gray-500 text-xs uppercase tracking-widest mb-3">알림 설정 ⏰</h3>
     <form method="POST" action="{{ url_for('questions.update_schedule') }}" class="space-y-3">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       <div class="flex items-center gap-3">
         <div class="flex-1">
           <label class="block text-xs text-gray-500 mb-1 font-medium">질문 알림 시간</label>
@@ -275,5 +281,21 @@ function escHtml(t) {
   d.textContent = t;
   return d.innerHTML;
 }
+
+// ── Enter 키 답변 제출 ──
+(function() {
+  var ta = document.getElementById('answerText');
+  var form = document.getElementById('answerForm');
+  if (ta && form) {
+    ta.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (ta.value.trim()) {
+          form.submit();
+        }
+      }
+    });
+  }
+})();
 </script>
 {% endblock %}

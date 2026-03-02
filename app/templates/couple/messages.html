@@ -16,6 +16,7 @@
   <!-- ── 메시지 입력 ── -->
   <div class="bg-white rounded-2xl shadow-sm border border-rose-50 p-4 slide-up" style="animation-delay:.03s">
     <form method="POST" action="{{ url_for('messages.send') }}" enctype="multipart/form-data" id="msgForm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
       <!-- 메시지 타입 선택 -->
       <div class="flex gap-2 mb-3 overflow-x-auto pb-1" id="typeSelector">
@@ -79,18 +80,22 @@
       </div>
 
       <!-- 메시지 내용 -->
-      <div class="flex gap-2">
-        <textarea name="content" id="msgContent" rows="2" maxlength="500"
+      <div class="flex gap-2 items-end">
+        <textarea name="content" id="msgContent" rows="1" maxlength="500"
                   placeholder="메시지를 입력하세요..."
                   class="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-sm
                          focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-400
-                         transition resize-none"></textarea>
-        <button type="submit"
-                class="flex-shrink-0 gradient-rose text-white font-bold px-4 rounded-xl
-                       hover:opacity-90 active:scale-95 transition-all shadow-sm text-sm self-end">
-          전송
+                         transition resize-none msg-input"></textarea>
+        <button type="submit" id="sendBtn"
+                class="flex-shrink-0 gradient-rose text-white font-bold w-10 h-10 rounded-xl
+                       hover:opacity-90 active:scale-95 transition-all shadow-sm text-sm
+                       flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+            <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z"/>
+          </svg>
         </button>
       </div>
+      <p class="text-[10px] text-gray-300 mt-1 text-right">Enter 전송 · Shift+Enter 줄바꿈</p>
     </form>
   </div>
 
@@ -157,6 +162,7 @@
             <span class="text-[10px] text-gray-300">{{ msg.created_at.strftime('%m/%d %H:%M') }}</span>
             {% if is_mine %}
             <form method="POST" action="{{ url_for('messages.delete', msg_id=msg.id) }}" class="inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
               <button type="submit" class="text-[10px] text-gray-300 hover:text-red-400 transition-colors"
                       onclick="return confirm('삭제할까요?')">삭제</button>
             </form>
@@ -273,6 +279,31 @@ function previewPhoto(input) {
     reader.readAsDataURL(input.files[0]);
   }
 }
+
+// ── Enter 키 전송 + 자동 높이 조절 ──
+(function() {
+  var ta = document.getElementById('msgContent');
+  var form = document.getElementById('msgForm');
+
+  // Enter → 전송, Shift+Enter → 줄바꿈
+  ta.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      var content = ta.value.trim();
+      var type = document.getElementById('msgType').value;
+      // 사진 모드에서는 content 없어도 OK
+      if (content || type === 'photo') {
+        form.submit();
+      }
+    }
+  });
+
+  // 자동 높이 조절 (1줄 ~ 최대 5줄)
+  ta.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+  });
+})();
 </script>
 
 <style>
