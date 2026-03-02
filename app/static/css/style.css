@@ -253,6 +253,19 @@ img { transition: opacity 0.3s ease; }
 }
 
 /* ═══════════════════════════════════════════════
+   AdSense Containers
+   ═══════════════════════════════════════════════ */
+.ad-container {
+  min-height: 50px;
+  text-align: center;
+}
+.ad-container ins {
+  max-width: 100%;
+}
+/* 광고가 없으면 숨김 (빈 공간 방지) */
+.ad-container:empty { display: none; }
+
+/* ═══════════════════════════════════════════════
    Selection Color
    ═══════════════════════════════════════════════ */
 ::selection {

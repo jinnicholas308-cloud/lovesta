@@ -77,6 +77,10 @@
 {% endif %}
 
 {% if memories.items %}
+
+<!-- ── 피드 상단 광고 ── -->
+{% include 'components/ad.html' %}
+
 <!-- ── 추억 그리드 ── -->
 <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4">
   {% for memory in memories.items %}
@@ -157,8 +161,18 @@
       </p>
     </div>
   </a>
+  {# 6번째 아이템 후 인피드 광고 삽입 #}
+  {% if loop.index == 6 and memories.items | length > 6 %}
+  <div class="col-span-2 sm:col-span-3">
+    {% with ad_format='infeed' %}{% include 'components/ad.html' %}{% endwith %}
+  </div>
+  {% endif %}
+
   {% endfor %}
 </div>
+
+<!-- ── 피드 하단 광고 ── -->
+{% include 'components/ad.html' %}
 
 <!-- ── 페이지네이션 ── -->
 {% if memories.pages > 1 %}

@@ -1,0 +1,35 @@
+{#
+  AdSense 광고 컴포넌트.
+
+  사용법:
+    {% include 'components/ad.html' %}                          — 기본 (인피드)
+    {% with ad_format='horizontal' %}{% include 'components/ad.html' %}{% endwith %}  — 가로 배너
+    {% with ad_format='square' %}{% include 'components/ad.html' %}{% endwith %}      — 정사각 (사이드)
+
+  ad_format 옵션:
+    - 'auto'       : 반응형 자동 (기본)
+    - 'horizontal' : 가로 배너 (피드 사이 삽입용)
+    - 'square'     : 300x250 정사각형
+    - 'infeed'     : 인피드 광고
+#}
+{% set fmt = ad_format | default('auto') %}
+
+<div class="ad-container my-4 flex justify-center overflow-hidden rounded-xl">
+  <ins class="adsbygoogle"
+       style="display:block;{% if fmt == 'horizontal' %}min-height:90px;{% elif fmt == 'square' %}min-width:250px;min-height:250px;{% endif %}"
+       data-ad-client="ca-pub-2505795324736912"
+       {% if fmt == 'infeed' %}
+       data-ad-layout="in-article"
+       data-ad-format="fluid"
+       {% elif fmt == 'horizontal' %}
+       data-ad-format="horizontal"
+       data-full-width-responsive="true"
+       {% elif fmt == 'square' %}
+       data-ad-format="rectangle"
+       {% else %}
+       data-ad-format="auto"
+       data-full-width-responsive="true"
+       {% endif %}
+       data-ad-slot=""></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</div>
