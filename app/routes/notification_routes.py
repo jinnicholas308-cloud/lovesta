@@ -1,10 +1,11 @@
 """
-Notification routes: list, mark read, unread count API.
+Notification routes: list, mark read, unread count API, push subscription.
 """
-from flask import Blueprint, render_template, redirect, url_for, jsonify, request
+from flask import Blueprint, render_template, redirect, url_for, jsonify, request, current_app
 from flask_login import login_required, current_user
 from app.extensions import db
 from app.models.notification import Notification
+from app.models.push_subscription import PushSubscription
 
 notification_bp = Blueprint('notification', __name__, url_prefix='/notifications')
 
@@ -53,3 +54,66 @@ def mark_all_read():
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return jsonify({'success': True})
     return redirect(url_for('notification.list_notifications'))
+
+
+# ──────────────────── Web Push API ────────────────────
+
+@notification_bp.route('/push/vapid-public-key')
+@login_required
+def vapid_public_key():
+    """클라이언트 푸시 구독용 VAPID 공개키 반환."""
+    key = current_app.config.get('VAPID_PUBLIC_KEY', '')
+    return jsonify({'publicKey': key})
+
+
+@notification_bp.route('/push/subscribe', methods=['POST'])
+@login_required
+def push_subscribe():
+    """브라우저 푸시 구독 등록."""
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({'error': 'Invalid JSON'}), 400
+
+    endpoint = data.get('endpoint', '')
+    keys = data.get('keys', {})
+    p256dh = keys.get('p256dh', '')
+    auth = keys.get('auth', '')
+
+    if not endpoint or not p256dh or not auth:
+        return jsonify({'error': 'Missing subscription data'}), 400
+
+    # 동일 endpoint 중복 방지
+    existing = PushSubscription.query.filter_by(
+        user_id=current_user.id, endpoint=endpoint
+    ).first()
+
+    if existing:
+        existing.p256dh = p256dh
+        existing.auth = auth
+    else:
+        sub = PushSubscription(
+            user_id=current_user.id,
+            endpoint=endpoint,
+            p256dh=p256dh,
+            auth=auth,
+        )
+        db.session.add(sub)
+
+    db.session.commit()
+    return jsonify({'success': True})
+
+
+@notification_bp.route('/push/unsubscribe', methods=['POST'])
+@login_required
+def push_unsubscribe():
+    """브라우저 푸시 구독 해제."""
+    data = request.get_json(silent=True)
+    endpoint = data.get('endpoint', '') if data else ''
+
+    if endpoint:
+        PushSubscription.query.filter_by(
+            user_id=current_user.id, endpoint=endpoint
+        ).delete()
+        db.session.commit()
+
+    return jsonify({'success': True})

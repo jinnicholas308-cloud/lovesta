@@ -1,7 +1,8 @@
 """
-In-app notification system.
-Types: memory_upload, comment, like, inquiry_reply, attendance_reminder, system
+In-app notification system + Web Push.
+Types: memory_upload, comment, like, inquiry_reply, attendance, gacha, message, question, system
 """
+import json
 from datetime import datetime
 from app.extensions import db
 
@@ -13,6 +14,8 @@ NOTIFICATION_TYPES = {
     'inquiry_reply':  {'icon': '>', 'label': '문의 답변'},
     'attendance':     {'icon': '!', 'label': '출석'},
     'gacha':          {'icon': '*', 'label': '가챠'},
+    'message':        {'icon': '💬', 'label': '메시지'},
+    'question':       {'icon': '❓', 'label': '데일리 질문'},
     'system':         {'icon': 'i', 'label': '시스템'},
 }
 
@@ -63,7 +66,9 @@ class Notification(db.Model):
 
     @staticmethod
     def send_to_couple_partner(user, type, title, body=None, url=None):
-        """Send notification to all couple members EXCEPT the given user."""
+        """Send notification to all couple members EXCEPT the given user.
+        Also sends web push to each partner.
+        """
         if not user.couple_id:
             return
         from app.models.user import User
@@ -73,6 +78,57 @@ class Notification(db.Model):
         ).all()
         for partner in partners:
             Notification.send(partner.id, type, title, body, url)
+            Notification.send_push_to_user(
+                partner.id, title, body=body, url=url, tag=type
+            )
+
+    @staticmethod
+    def send_push_to_user(user_id, title, body=None, url=None, tag=None):
+        """Send web push notification to all subscriptions of a user."""
+        from flask import current_app
+
+        private_key = current_app.config.get('VAPID_PRIVATE_KEY')
+        public_key = current_app.config.get('VAPID_PUBLIC_KEY')
+        claims_email = current_app.config.get('VAPID_CLAIMS_EMAIL', 'mailto:admin@lovesta.app')
+
+        if not private_key or not public_key:
+            return  # VAPID 미설정 → skip
+
+        from app.models.push_subscription import PushSubscription
+        subscriptions = PushSubscription.query.filter_by(user_id=user_id).all()
+
+        if not subscriptions:
+            return
+
+        try:
+            from pywebpush import webpush, WebPushException
+        except ImportError:
+            current_app.logger.warning('[Push] pywebpush not installed')
+            return
+
+        payload = json.dumps({
+            'title': title,
+            'body': body or '',
+            'url': url or '/',
+            'tag': tag or 'lovesta-default',
+        })
+
+        for sub in subscriptions:
+            try:
+                webpush(
+                    subscription_info=sub.to_webpush_dict(),
+                    data=payload,
+                    vapid_private_key=private_key,
+                    vapid_claims={"sub": claims_email},
+                )
+            except WebPushException as e:
+                # 410 Gone / 404 = 구독 만료 → 자동 삭제
+                if '410' in str(e) or '404' in str(e):
+                    db.session.delete(sub)
+                    db.session.commit()
+                current_app.logger.warning(f'[Push] Failed for sub {sub.id}: {e}')
+            except Exception as e:
+                current_app.logger.warning(f'[Push] Unexpected error for sub {sub.id}: {e}')
 
     @staticmethod
     def unread_count(user_id):

@@ -261,17 +261,82 @@
   <script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 
-  <!-- Service Worker 등록 + 알림 뱃지 -->
+  <!-- Service Worker 등록 + 푸시 구독 + 알림 뱃지 -->
   <script>
-  // SW 등록
+  // SW 등록 + Push 구독
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js', { scope: '/' })
-      .then(function(r) { console.log('[SW] registered', r.scope); })
+      .then(function(reg) {
+        console.log('[SW] registered', reg.scope);
+        {% if current_user.is_authenticated %}
+        if ('PushManager' in window) {
+          _initPush(reg);
+        }
+        {% endif %}
+      })
       .catch(function(e) { console.log('[SW] failed', e); });
   }
 
-  // 알림 뱃지 업데이트 (30초마다)
   {% if current_user.is_authenticated %}
+  // ── 푸시 구독 초기화 ──
+  function _initPush(reg) {
+    fetch('/notifications/push/vapid-public-key')
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (!d.publicKey) return;
+        var serverKey = _urlB64ToUint8(d.publicKey);
+
+        reg.pushManager.getSubscription().then(function(sub) {
+          if (sub) {
+            _saveSub(sub);
+            return;
+          }
+          if (window.Notification && Notification.permission === 'default') {
+            Notification.requestPermission().then(function(perm) {
+              if (perm !== 'granted') return;
+              reg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: serverKey,
+              }).then(_saveSub).catch(function(e) {
+                console.log('[Push] subscribe failed:', e);
+              });
+            });
+          } else if (window.Notification && Notification.permission === 'granted') {
+            reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: serverKey,
+            }).then(_saveSub).catch(function(e) {
+              console.log('[Push] subscribe failed:', e);
+            });
+          }
+        });
+      }).catch(function(e) { console.log('[Push] vapid key fetch failed:', e); });
+  }
+
+  function _saveSub(sub) {
+    var csrf = document.querySelector('meta[name="csrf-token"]');
+    fetch('/notifications/push/subscribe', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrf ? csrf.getAttribute('content') : '',
+      },
+      body: JSON.stringify(sub.toJSON()),
+    }).then(function(r) {
+      if (r.ok) console.log('[Push] subscription saved');
+    }).catch(function(e) { console.log('[Push] save failed:', e); });
+  }
+
+  function _urlB64ToUint8(base64String) {
+    var padding = '='.repeat((4 - base64String.length % 4) % 4);
+    var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    var raw = atob(base64);
+    var arr = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+    return arr;
+  }
+
+  // ── 알림 뱃지 업데이트 (30초마다) ──
   (function notifPoll() {
     function update() {
       fetch('/notifications/unread-count')

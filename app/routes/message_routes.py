@@ -89,6 +89,16 @@ def send():
     db.session.add(message)
     db.session.commit()
 
+    # 파트너에게 알림 (인앱 + 푸시)
+    from app.models.notification import Notification
+    Notification.send_to_couple_partner(
+        current_user, 'message',
+        f'{current_user.username}님이 메시지를 보냈어요!',
+        body=content[:100] if content else '새 메시지',
+        url=url_for('messages.chat')
+    )
+    db.session.commit()
+
     # AJAX 요청이면 JSON 응답
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return jsonify({

@@ -66,6 +66,7 @@ self.addEventListener('push', e => {
       icon: '/static/icons/icon-192.png',
       badge: '/static/icons/icon-192.png',
       tag: data.tag || 'lovesta-default',
+      renotify: true,
       data: { url: data.url || '/' },
       vibrate: [200, 100, 200],
     })

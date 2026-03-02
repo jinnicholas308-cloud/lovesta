@@ -135,6 +135,16 @@ def answer():
     db.session.add(answer)
     db.session.commit()
 
+    # 파트너에게 알림 (인앱 + 푸시)
+    from app.models.notification import Notification
+    Notification.send_to_couple_partner(
+        current_user, 'question',
+        f'{current_user.username}님이 오늘의 질문에 답변했어요!',
+        body=question.question_text[:100],
+        url=url_for('questions.index')
+    )
+    db.session.commit()
+
     flash('답변이 저장되었어요! 💕', 'success')
     return redirect(url_for('questions.index'))
 
