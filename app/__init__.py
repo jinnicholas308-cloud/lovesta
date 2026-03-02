@@ -51,6 +51,8 @@ def create_app(env: str = None):
     from app.routes.inquiry_routes import inquiry_bp
     from app.routes.attendance_routes import attendance_bp
     from app.routes.notification_routes import notification_bp
+    from app.routes.message_routes import message_bp
+    from app.routes.question_routes import question_bp
 
     init_oauth(app)
 
@@ -65,6 +67,8 @@ def create_app(env: str = None):
     app.register_blueprint(inquiry_bp)
     app.register_blueprint(attendance_bp)
     app.register_blueprint(notification_bp)
+    app.register_blueprint(message_bp)
+    app.register_blueprint(question_bp)
 
     with app.app_context():
         try:

@@ -8,6 +8,7 @@ from flask_login import login_required, current_user
 from app.extensions import db
 from app.models import User
 from app.utils.security import sanitize_input
+from app.utils.file_handler import save_image, allowed_file
 
 profile_bp = Blueprint('profile', __name__, url_prefix='/profile')
 
@@ -19,11 +20,41 @@ MBTI_LIST = [
 ]
 
 
+def _handle_profile_photo():
+    """프로필 사진 업로드 처리 (공통 로직)"""
+    profile_photo = request.files.get('profile_photo')
+    if profile_photo and profile_photo.filename:
+        if allowed_file(profile_photo.filename):
+            try:
+                image_path = save_image(profile_photo)
+                if image_path.startswith('http'):
+                    current_user.profile_image = image_path
+                else:
+                    current_user.profile_image = url_for('memories.uploaded_file',
+                                                         filename=image_path, _external=True)
+                return True
+            except Exception:
+                flash('사진 업로드에 실패했어요. 다시 시도해주세요.', 'error')
+        else:
+            flash('지원하지 않는 이미지 형식이에요. (PNG, JPG, GIF, WEBP)', 'error')
+    return False
+
+
 @profile_bp.route('/', methods=['GET', 'POST'])
 @login_required
 def me():
     if request.method == 'POST':
+        # 프로필 사진 업로드 처리
+        _handle_profile_photo()
+
+        # 아바타 전용 폼인지 체크 (username 필드가 없으면 사진 전용)
         username = sanitize_input(request.form.get('username', ''), max_length=50)
+        if not username and request.files.get('profile_photo'):
+            # 사진 전용 업로드 — 사진만 저장하고 리다이렉트
+            db.session.commit()
+            flash('프로필 사진이 변경됐어요! 📷', 'success')
+            return redirect(url_for('profile.me'))
+
         bio = request.form.get('bio', '').strip()[:300]             # 300자 제한
         favorite_food = sanitize_input(request.form.get('favorite_food', ''), max_length=100)
         mbti = request.form.get('mbti', '').strip().upper()[:4]

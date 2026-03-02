@@ -76,6 +76,27 @@
     </div>
   </div>
 
+  <!-- ── 커플 활동 바로가기 ── -->
+  <div class="grid grid-cols-2 gap-3 slide-up" style="animation-delay:.10s">
+    <!-- 커플 메시지 -->
+    <a href="{{ url_for('messages.chat') }}"
+       class="bg-white rounded-2xl shadow-sm border border-rose-50 p-5 hover:border-rose-200
+              hover:shadow-md transition-all group active:scale-[0.98]">
+      <div class="text-3xl mb-2 group-hover:scale-110 transition-transform">💌</div>
+      <h3 class="font-bold text-gray-800 text-sm">커플 메시지</h3>
+      <p class="text-xs text-gray-400 mt-0.5 leading-relaxed">메모, 위치, 생각을<br/>서로 공유해요</p>
+    </a>
+
+    <!-- 데일리 질문 -->
+    <a href="{{ url_for('questions.index') }}"
+       class="bg-white rounded-2xl shadow-sm border border-rose-50 p-5 hover:border-purple-200
+              hover:shadow-md transition-all group active:scale-[0.98]">
+      <div class="text-3xl mb-2 group-hover:scale-110 transition-transform">💬</div>
+      <h3 class="font-bold text-gray-800 text-sm">데일리 질문</h3>
+      <p class="text-xs text-gray-400 mt-0.5 leading-relaxed">매일 질문에 답하며<br/>서로를 이해해요</p>
+    </a>
+  </div>
+
   <!-- ── 우리 펫 ── -->
   {% set pet = couple.pet_info %}
   <div class="bg-white rounded-2xl shadow-sm border border-rose-50 p-6 slide-up" style="animation-delay:.12s">

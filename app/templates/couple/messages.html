@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+{% block title %}커플 메시지{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto space-y-4">
+
+  <!-- ── 헤더 ── -->
+  <div class="flex items-center justify-between slide-up">
+    <a href="{{ url_for('couple.info') }}" class="text-gray-400 hover:text-rose-500 transition-colors text-sm">
+      &larr; 커플
+    </a>
+    <h1 class="text-lg font-black gradient-text">커플 메시지 💌</h1>
+    <div class="w-12"></div>
+  </div>
+
+  <!-- ── 메시지 입력 ── -->
+  <div class="bg-white rounded-2xl shadow-sm border border-rose-50 p-4 slide-up" style="animation-delay:.03s">
+    <form method="POST" action="{{ url_for('messages.send') }}" enctype="multipart/form-data" id="msgForm">
+
+      <!-- 메시지 타입 선택 -->
+      <div class="flex gap-2 mb-3 overflow-x-auto pb-1" id="typeSelector">
+        <button type="button" data-type="memo"
+                class="msg-type-btn active flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-all border-2">
+          📝 메모
+        </button>
+        <button type="button" data-type="thought"
+                class="msg-type-btn flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-all border-2">
+          💭 생각
+        </button>
+        <button type="button" data-type="location"
+                class="msg-type-btn flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-all border-2">
+          📍 위치
+        </button>
+        <button type="button" data-type="photo"
+                class="msg-type-btn flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-all border-2">
+          📷 사진
+        </button>
+      </div>
+      <input type="hidden" name="msg_type" id="msgType" value="memo" />
+
+      <!-- 무드 선택 (생각 모드에서만 표시) -->
+      <div id="moodPicker" class="hidden mb-3">
+        <p class="text-xs text-gray-400 mb-1.5 font-medium">오늘의 기분</p>
+        <div class="flex gap-2 flex-wrap">
+          {% for emoji in ['😊','😍','🥰','😢','😤','🤔','😴','🥳','😎','💪'] %}
+          <button type="button" onclick="selectMood('{{ emoji }}')"
+                  class="mood-btn w-9 h-9 rounded-full border-2 border-gray-100 hover:border-rose-300
+                         flex items-center justify-center text-lg transition-all hover:scale-110">
+            {{ emoji }}
+          </button>
+          {% endfor %}
+        </div>
+        <input type="hidden" name="mood" id="moodInput" value="" />
+      </div>
+
+      <!-- 위치 입력 (위치 모드에서만 표시) -->
+      <div id="locationInput" class="hidden mb-3">
+        <input type="text" name="location_name" placeholder="장소 이름 (예: 홍대 맛집, 한강공원...)"
+               class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm
+                      focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-400 transition" />
+        <button type="button" onclick="getMyLocation()"
+                class="mt-1.5 text-xs text-rose-400 hover:text-rose-500 font-medium">
+          📍 현재 위치 자동 입력
+        </button>
+        <input type="hidden" name="latitude" id="lat" />
+        <input type="hidden" name="longitude" id="lng" />
+      </div>
+
+      <!-- 사진 첨부 (사진 모드에서만 표시) -->
+      <div id="photoInput" class="hidden mb-3">
+        <label class="block w-full border-2 border-dashed border-gray-200 rounded-xl p-4 text-center
+                      cursor-pointer hover:border-rose-300 hover:bg-rose-50/30 transition-all">
+          <input type="file" name="photo" accept="image/*" class="hidden" id="photoFile" onchange="previewPhoto(this)" />
+          <div id="photoPreviewArea">
+            <span class="text-3xl">📷</span>
+            <p class="text-xs text-gray-400 mt-1">사진을 선택하세요</p>
+          </div>
+        </label>
+      </div>
+
+      <!-- 메시지 내용 -->
+      <div class="flex gap-2">
+        <textarea name="content" id="msgContent" rows="2" maxlength="500"
+                  placeholder="메시지를 입력하세요..."
+                  class="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-sm
+                         focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-400
+                         transition resize-none"></textarea>
+        <button type="submit"
+                class="flex-shrink-0 gradient-rose text-white font-bold px-4 rounded-xl
+                       hover:opacity-90 active:scale-95 transition-all shadow-sm text-sm self-end">
+          전송
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── 메시지 목록 (채팅 스타일) ── -->
+  <div class="space-y-3 slide-up" style="animation-delay:.06s" id="messageList">
+    {% if messages.items %}
+      {% for msg in messages.items | reverse %}
+      {% set is_mine = msg.user_id == current_user.id %}
+      <div class="flex {{ 'justify-end' if is_mine else 'justify-start' }} items-end gap-2">
+
+        {% if not is_mine %}
+        <!-- 파트너 아바타 -->
+        <div class="flex-shrink-0">
+          {% if partner and partner.profile_image %}
+            <img src="{{ partner.profile_image }}" class="w-8 h-8 rounded-full object-cover ring-2 ring-rose-50" />
+          {% else %}
+            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-pink-400 to-rose-500
+                        flex items-center justify-center text-white text-xs font-bold ring-2 ring-rose-50">
+              {{ partner.username[0].upper() if partner else '?' }}
+            </div>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="max-w-[75%]">
+          <!-- 타입 태그 -->
+          {% if msg.msg_type != 'memo' %}
+          <div class="{{ 'text-right' if is_mine else 'text-left' }} mb-0.5">
+            <span class="text-[10px] font-bold {{ 'text-rose-400' if is_mine else 'text-gray-400' }}">
+              {{ msg.type_icon }} {{ msg.type_label }}
+            </span>
+          </div>
+          {% endif %}
+
+          <div class="{{ 'bg-gradient-to-br from-rose-500 to-pink-500 text-white' if is_mine else 'bg-white border border-gray-100' }}
+                      rounded-2xl {{ 'rounded-br-sm' if is_mine else 'rounded-bl-sm' }} p-3 shadow-sm">
+
+            {% if msg.mood %}
+            <span class="text-xl leading-none">{{ msg.mood }}</span>
+            {% endif %}
+
+            {% if msg.image_path %}
+            <div class="mb-2 rounded-xl overflow-hidden">
+              {% if msg.image_path.startswith('http') %}
+                <img src="{{ msg.image_path }}" class="w-full rounded-xl" loading="lazy" />
+              {% else %}
+                <img src="{{ url_for('memories.uploaded_file', filename=msg.image_path) }}"
+                     class="w-full rounded-xl" loading="lazy" />
+              {% endif %}
+            </div>
+            {% endif %}
+
+            <p class="text-sm leading-relaxed {{ 'text-white' if is_mine else 'text-gray-700' }} whitespace-pre-wrap">{{ msg.content }}</p>
+
+            {% if msg.location_name %}
+            <p class="mt-1.5 text-xs {{ 'text-white/70' if is_mine else 'text-gray-400' }} flex items-center gap-1">
+              📍 {{ msg.location_name }}
+            </p>
+            {% endif %}
+          </div>
+
+          <!-- 시간 & 삭제 -->
+          <div class="flex items-center gap-2 mt-0.5 {{ 'justify-end' if is_mine else 'justify-start' }}">
+            <span class="text-[10px] text-gray-300">{{ msg.created_at.strftime('%m/%d %H:%M') }}</span>
+            {% if is_mine %}
+            <form method="POST" action="{{ url_for('messages.delete', msg_id=msg.id) }}" class="inline">
+              <button type="submit" class="text-[10px] text-gray-300 hover:text-red-400 transition-colors"
+                      onclick="return confirm('삭제할까요?')">삭제</button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if is_mine %}
+        <!-- 내 아바타 -->
+        <div class="flex-shrink-0">
+          {% if current_user.profile_image %}
+            <img src="{{ current_user.profile_image }}" class="w-8 h-8 rounded-full object-cover ring-2 ring-rose-100" />
+          {% else %}
+            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-rose-400 to-pink-500
+                        flex items-center justify-center text-white text-xs font-bold ring-2 ring-rose-100">
+              {{ current_user.username[0].upper() }}
+            </div>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+
+      <!-- 페이지네이션 -->
+      {% if messages.has_next %}
+      <div class="text-center py-3">
+        <a href="{{ url_for('messages.chat', page=messages.next_num) }}"
+           class="text-sm text-rose-400 hover:text-rose-500 font-medium">
+          이전 메시지 보기 &darr;
+        </a>
+      </div>
+      {% endif %}
+
+    {% else %}
+      <div class="text-center py-12">
+        <span class="text-5xl">💌</span>
+        <p class="text-gray-400 mt-3 text-sm">아직 메시지가 없어요!</p>
+        <p class="text-gray-300 text-xs mt-1">서로에게 메모를 남겨보세요</p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+// 메시지 타입 전환
+document.querySelectorAll('.msg-type-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.msg-type-btn').forEach(function(b) {
+      b.classList.remove('active', 'border-rose-400', 'bg-rose-50', 'text-rose-500');
+      b.classList.add('border-gray-200', 'text-gray-500', 'bg-white');
+    });
+    this.classList.add('active', 'border-rose-400', 'bg-rose-50', 'text-rose-500');
+    this.classList.remove('border-gray-200', 'text-gray-500', 'bg-white');
+
+    var type = this.getAttribute('data-type');
+    document.getElementById('msgType').value = type;
+
+    document.getElementById('moodPicker').classList.toggle('hidden', type !== 'thought');
+    document.getElementById('locationInput').classList.toggle('hidden', type !== 'location');
+    document.getElementById('photoInput').classList.toggle('hidden', type !== 'photo');
+
+    var placeholders = {
+      'memo': '메시지를 입력하세요...',
+      'thought': '오늘 어떤 생각을 했어?',
+      'location': '이 장소에서 무엇을 했어?',
+      'photo': '사진에 대한 한마디... (선택)'
+    };
+    document.getElementById('msgContent').placeholder = placeholders[type] || '메시지를 입력하세요...';
+  });
+});
+
+// 초기 활성 상태
+document.querySelector('.msg-type-btn[data-type="memo"]').classList.add('border-rose-400', 'bg-rose-50', 'text-rose-500');
+
+// 무드 선택
+function selectMood(emoji) {
+  document.getElementById('moodInput').value = emoji;
+  document.querySelectorAll('.mood-btn').forEach(function(b) {
+    b.classList.remove('border-rose-400', 'bg-rose-50', 'scale-110');
+    b.classList.add('border-gray-100');
+  });
+  event.target.closest('.mood-btn').classList.add('border-rose-400', 'bg-rose-50', 'scale-110');
+  event.target.closest('.mood-btn').classList.remove('border-gray-100');
+}
+
+// 위치 자동 입력
+function getMyLocation() {
+  if (!navigator.geolocation) {
+    alert('이 브라우저는 위치 서비스를 지원하지 않아요.');
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(function(pos) {
+    document.getElementById('lat').value = pos.coords.latitude;
+    document.getElementById('lng').value = pos.coords.longitude;
+
+    var locInput = document.querySelector('input[name="location_name"]');
+    if (!locInput.value) {
+      locInput.value = '현재 위치 (' + pos.coords.latitude.toFixed(4) + ', ' + pos.coords.longitude.toFixed(4) + ')';
+    }
+  }, function(err) {
+    alert('위치를 가져올 수 없어요: ' + err.message);
+  });
+}
+
+// 사진 미리보기
+function previewPhoto(input) {
+  var area = document.getElementById('photoPreviewArea');
+  if (input.files && input.files[0]) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      area.innerHTML = '<img src="' + e.target.result + '" class="max-h-40 mx-auto rounded-xl" /><p class="text-xs text-gray-400 mt-1">다른 사진을 선택하려면 클릭</p>';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+</script>
+
+<style>
+.msg-type-btn { border-color: #e5e7eb; color: #9ca3af; background: white; }
+.msg-type-btn.active { border-color: #fb7185; background: #fff1f2; color: #f43f5e; }
+</style>
+{% endblock %}

@@ -4,20 +4,44 @@
 {% block content %}
 <div class="max-w-lg mx-auto space-y-5">
 
-  <!-- ── 프로필 헤더 ── -->
+  <!-- ── 프로필 헤더 (사진 업로드 포함) ── -->
   <div class="text-center pt-2 slide-up">
-    <div class="inline-block">
+    <div class="inline-block relative group cursor-pointer" onclick="document.getElementById('avatarUploadForm').classList.toggle('hidden')">
       {% if current_user.profile_image %}
-        <img src="{{ current_user.profile_image }}"
+        <img src="{{ current_user.profile_image }}" id="avatarPreview"
              class="w-24 h-24 rounded-full object-cover ring-4 ring-rose-100 avatar-glow mx-auto" />
       {% else %}
-        <div class="w-24 h-24 rounded-full bg-gradient-to-br from-rose-400 to-pink-500
+        <div id="avatarPreview"
+             class="w-24 h-24 rounded-full bg-gradient-to-br from-rose-400 to-pink-500
                     flex items-center justify-center text-white text-3xl font-black mx-auto
                     ring-4 ring-rose-100 avatar-glow">
           {{ current_user.username[0].upper() }}
         </div>
       {% endif %}
+      <!-- 카메라 오버레이 -->
+      <div class="absolute inset-0 w-24 h-24 rounded-full mx-auto bg-black/40 flex items-center justify-center
+                  opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <span class="text-white text-xl">📷</span>
+      </div>
     </div>
+
+    <!-- 프로필 사진 업로드 (숨김 / 클릭시 토글) -->
+    <div id="avatarUploadForm" class="hidden mt-3 pop-in">
+      <form method="POST" enctype="multipart/form-data" id="photoUploadForm" class="inline-flex flex-col items-center gap-2">
+        <label class="cursor-pointer bg-rose-50 hover:bg-rose-100 text-rose-500 font-semibold text-sm
+                      px-4 py-2 rounded-xl border border-rose-200 transition-all active:scale-95">
+          <input type="file" name="profile_photo" accept="image/png,image/jpeg,image/gif,image/webp"
+                 class="hidden" onchange="previewAvatar(this)" />
+          사진 선택하기 📷
+        </label>
+        <p class="text-[10px] text-gray-300">PNG, JPG, GIF, WEBP (최대 16MB)</p>
+        <button type="submit" id="uploadBtn" class="hidden gradient-rose text-white font-bold text-sm px-6 py-2 rounded-xl
+                       hover:opacity-90 active:scale-95 transition-all shadow-sm">
+          업로드 확인
+        </button>
+      </form>
+    </div>
+
     <h1 class="mt-3 text-xl font-black gradient-text">{{ current_user.username }}</h1>
     <p class="text-sm text-gray-400">{{ current_user.email }}</p>
     {% if current_user.bio %}
@@ -63,7 +87,7 @@
   </div>
 
   <!-- ── 프로필 폼 ── -->
-  <form method="POST"
+  <form method="POST" enctype="multipart/form-data"
         class="bg-white rounded-2xl shadow-sm border border-rose-50 p-5 space-y-4 slide-up"
         style="animation-delay:.05s">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
@@ -247,6 +271,35 @@
 </div>
 
 <script>
+// 프로필 사진 미리보기
+function previewAvatar(input) {
+  if (input.files && input.files[0]) {
+    var file = input.files[0];
+    // 파일 크기 체크 (16MB)
+    if (file.size > 16 * 1024 * 1024) {
+      alert('파일 크기는 16MB 이하여야 해요!');
+      input.value = '';
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var preview = document.getElementById('avatarPreview');
+      if (preview.tagName === 'IMG') {
+        preview.src = e.target.result;
+      } else {
+        // div → img로 교체
+        var img = document.createElement('img');
+        img.src = e.target.result;
+        img.id = 'avatarPreview';
+        img.className = 'w-24 h-24 rounded-full object-cover ring-4 ring-rose-100 avatar-glow mx-auto';
+        preview.parentNode.replaceChild(img, preview);
+      }
+      document.getElementById('uploadBtn').classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
 // 출석 체크 API
 async function doCheckIn() {
   var btn = document.getElementById('checkInBtn');
