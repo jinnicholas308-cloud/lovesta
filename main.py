@@ -46,6 +46,15 @@ def asset_links():
     return resp
 
 
+@app.route('/ads.txt')
+def ads_txt():
+    """Google AdSense ads.txt 서빙."""
+    static_dir = os.path.join(app.root_path, 'static')
+    resp = send_from_directory(static_dir, 'ads.txt')
+    resp.headers['Content-Type'] = 'text/plain; charset=utf-8'
+    return resp
+
+
 @app.route('/sitemap')
 def sitemap_visual():
     """사이트 구조 시각화 페이지"""
